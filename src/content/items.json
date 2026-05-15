@@ -1,0 +1,263 @@
+[
+  {
+    "item_id": "mm_01",
+    "kc": "mean_median",
+    "difficulty": 0.2,
+    "modality": "multiple_choice",
+    "question": "A dataset is: 3, 7, 7, 9, 14. What is the mean?",
+    "choices": ["7", "8", "9", "7.5"],
+    "correct_answer": "8",
+    "worked_example": "Sum = 3+7+7+9+14 = 40. Count = 5. Mean = 40/5 = 8.",
+    "misconceptions": ["Confusing mean with median (median here is 7)", "Forgetting to divide by n"]
+  },
+  {
+    "item_id": "mm_02",
+    "kc": "mean_median",
+    "difficulty": 0.2,
+    "modality": "multiple_choice",
+    "question": "A dataset is: 3, 7, 7, 9, 14. What is the median?",
+    "choices": ["7", "8", "9", "7.5"],
+    "correct_answer": "7",
+    "worked_example": "Sort: 3, 7, 7, 9, 14. Middle value (3rd of 5) = 7.",
+    "misconceptions": ["Confusing median with mean", "Not sorting before finding middle"]
+  },
+  {
+    "item_id": "mm_03",
+    "kc": "mean_median",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "A salary dataset has most values near $45,000 but one executive earns $2,000,000. Which measure better represents the 'typical' salary?",
+    "choices": ["Mean", "Median", "Both are equally good", "Neither"],
+    "correct_answer": "Median",
+    "worked_example": "The extreme outlier ($2M) pulls the mean far above most salaries. The median is resistant to outliers and better captures the center for skewed distributions.",
+    "misconceptions": ["Assuming mean is always best", "Not recognizing outlier impact on mean"]
+  },
+  {
+    "item_id": "mm_04",
+    "kc": "mean_median",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "For an even-length dataset: 2, 5, 8, 11. Calculate the median. Show your work.",
+    "correct_answer": "6.5",
+    "worked_example": "Sort (already sorted): 2, 5, 8, 11. Two middle values: 5 and 8. Median = (5+8)/2 = 6.5.",
+    "misconceptions": ["Taking just one middle value for even-length data", "Not averaging the two middle values"]
+  },
+  {
+    "item_id": "var_01",
+    "kc": "variance",
+    "difficulty": 0.3,
+    "modality": "multiple_choice",
+    "question": "Dataset: 2, 4, 4, 4, 5, 5, 7, 9. The mean is 5. Which of these is the variance?",
+    "choices": ["2", "4", "5", "3"],
+    "correct_answer": "4",
+    "worked_example": "Deviations from mean: (-3,-1,-1,-1,0,0,2,4). Squared: (9,1,1,1,0,0,4,16). Sum=32. Variance=32/8=4.",
+    "misconceptions": ["Forgetting to square the deviations", "Dividing by n-1 vs n (population vs sample)"]
+  },
+  {
+    "item_id": "var_02",
+    "kc": "variance",
+    "difficulty": 0.3,
+    "modality": "multiple_choice",
+    "question": "Dataset: 2, 4, 4, 4, 5, 5, 7, 9. The variance is 4. What is the standard deviation?",
+    "choices": ["1", "2", "4", "16"],
+    "correct_answer": "2",
+    "worked_example": "Standard deviation = √variance = √4 = 2. It is in the same units as the original data.",
+    "misconceptions": ["Thinking SD = variance", "Squaring instead of taking square root"]
+  },
+  {
+    "item_id": "var_03",
+    "kc": "variance",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "Why do we square the deviations when computing variance?",
+    "choices": [
+      "To make all values positive and penalize larger deviations more",
+      "Because squaring is easier to compute than absolute values",
+      "To keep the units the same as the data",
+      "It is just a historical convention with no mathematical reason"
+    ],
+    "correct_answer": "To make all values positive and penalize larger deviations more",
+    "worked_example": "Positive and negative deviations cancel if unsquared (sum = 0). Squaring ensures all contributions are positive and gives extra weight to points far from the mean.",
+    "misconceptions": ["Thinking we could just use absolute deviations (we can — MAD — but squaring has nicer mathematical properties)"]
+  },
+  {
+    "item_id": "zs_01",
+    "kc": "z_scores",
+    "difficulty": 0.3,
+    "modality": "multiple_choice",
+    "question": "A student scores 72 on a test with mean 60 and SD 12. What is their z-score?",
+    "choices": ["0.5", "1.0", "1.5", "2.0"],
+    "correct_answer": "1.0",
+    "worked_example": "z = (x - μ) / σ = (72 - 60) / 12 = 12/12 = 1.0. The score is exactly 1 standard deviation above the mean.",
+    "misconceptions": ["Dividing by mean instead of SD", "Subtracting in wrong order"]
+  },
+  {
+    "item_id": "zs_02",
+    "kc": "z_scores",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "A z-score of -1.5 means a value is:",
+    "choices": [
+      "1.5 standard deviations below the mean",
+      "1.5 standard deviations above the mean",
+      "In the bottom 1.5% of the distribution",
+      "Negative"
+    ],
+    "correct_answer": "1.5 standard deviations below the mean",
+    "worked_example": "The sign of z indicates direction: negative = below mean. The magnitude gives distance in SD units. z=-1.5 means 1.5 SDs below μ.",
+    "misconceptions": ["Confusing sign with percentile", "Thinking negative z means the original value is negative"]
+  },
+  {
+    "item_id": "zs_03",
+    "kc": "z_scores",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "Why are z-scores useful for comparing scores from different tests?",
+    "choices": [
+      "They standardize scores to a common scale regardless of original units",
+      "They convert all scores to percentages",
+      "They remove outliers from the data",
+      "They make all distributions normal"
+    ],
+    "correct_answer": "They standardize scores to a common scale regardless of original units",
+    "worked_example": "Test A (mean=50, SD=10) score of 65 → z=1.5. Test B (mean=500, SD=100) score of 650 → z=1.5. Same z-score means same relative standing.",
+    "misconceptions": ["Thinking z-scores change the shape of the distribution", "Confusing standardization with normalization to 0-1"]
+  },
+  {
+    "item_id": "zs_04",
+    "kc": "z_scores",
+    "difficulty": 0.6,
+    "modality": "free_response",
+    "question": "If a dataset has mean 100 and SD 15, what raw score corresponds to z = -2?",
+    "correct_answer": "70",
+    "worked_example": "Rearrange z = (x - μ)/σ → x = μ + z·σ = 100 + (-2)(15) = 100 - 30 = 70.",
+    "misconceptions": ["Adding instead of subtracting for negative z", "Forgetting to multiply z by SD"]
+  },
+  {
+    "item_id": "sd_01",
+    "kc": "sampling_distributions",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "What is a sampling distribution of the sample mean?",
+    "choices": [
+      "The distribution of sample means from all possible samples of the same size",
+      "The distribution of values in a single sample",
+      "The distribution of population values",
+      "A histogram of one sample"
+    ],
+    "correct_answer": "The distribution of sample means from all possible samples of the same size",
+    "worked_example": "Imagine drawing every possible sample of size n from a population and computing x̄ each time. The distribution of those x̄ values is the sampling distribution.",
+    "misconceptions": ["Confusing sampling distribution with the sample itself", "Thinking it requires actually collecting many samples"]
+  },
+  {
+    "item_id": "sd_02",
+    "kc": "sampling_distributions",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "The Central Limit Theorem states that as sample size increases, the sampling distribution of x̄ approaches:",
+    "choices": [
+      "A normal distribution, regardless of population shape",
+      "The same shape as the population",
+      "A uniform distribution",
+      "A distribution with mean 0"
+    ],
+    "correct_answer": "A normal distribution, regardless of population shape",
+    "worked_example": "Even if the population is skewed or bimodal, the distribution of x̄ becomes approximately normal for large n (typically n ≥ 30 is sufficient).",
+    "misconceptions": ["Thinking CLT only applies to normal populations", "Confusing CLT with the law of large numbers"]
+  },
+  {
+    "item_id": "sd_03",
+    "kc": "sampling_distributions",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "Increasing sample size from n=25 to n=100 will do which of the following to the sampling distribution of x̄?",
+    "choices": [
+      "Make it narrower (less spread)",
+      "Make it wider (more spread)",
+      "Shift the mean higher",
+      "Make it less normal"
+    ],
+    "correct_answer": "Make it narrower (less spread)",
+    "worked_example": "Standard error = σ/√n. At n=25: SE=σ/5. At n=100: SE=σ/10. Larger n → smaller SE → tighter sampling distribution around μ.",
+    "misconceptions": ["Thinking larger samples make distributions wider", "Forgetting that SE depends on √n not n"]
+  },
+  {
+    "item_id": "se_01",
+    "kc": "standard_error",
+    "difficulty": 0.3,
+    "modality": "multiple_choice",
+    "question": "A population has SD σ=20. What is the standard error of the mean for samples of size n=100?",
+    "choices": ["0.2", "2", "20", "200"],
+    "correct_answer": "2",
+    "worked_example": "SE = σ/√n = 20/√100 = 20/10 = 2. SE measures how much sample means vary around the true population mean.",
+    "misconceptions": ["Dividing by n instead of √n", "Confusing population SD with SE"]
+  },
+  {
+    "item_id": "se_02",
+    "kc": "standard_error",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "What is the conceptual difference between standard deviation and standard error?",
+    "choices": [
+      "SD measures spread of individual values; SE measures precision of the sample mean",
+      "SD is for populations; SE is for samples",
+      "SE is always larger than SD",
+      "They measure the same thing with different formulas"
+    ],
+    "correct_answer": "SD measures spread of individual values; SE measures precision of the sample mean",
+    "worked_example": "SD describes how spread out the raw data are. SE describes how much the sample mean would vary across repeated samples — it quantifies estimation precision.",
+    "misconceptions": ["Using SD when SE is appropriate for inference", "Thinking SE = SD/n rather than SD/√n"]
+  },
+  {
+    "item_id": "se_03",
+    "kc": "standard_error",
+    "difficulty": 0.6,
+    "modality": "free_response",
+    "question": "A researcher wants to cut the standard error in half. By what factor must they increase the sample size?",
+    "correct_answer": "4",
+    "worked_example": "SE = σ/√n. To get SE/2: σ/√n_new = (σ/√n)/2 → √n_new = 2√n → n_new = 4n. Sample size must quadruple.",
+    "misconceptions": ["Thinking doubling n halves SE (it only reduces SE by √2 ≈ 1.41)", "Forgetting the square root relationship"]
+  },
+  {
+    "item_id": "ci_01",
+    "kc": "confidence_intervals",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "A 95% confidence interval for a population mean is (48, 56). What does '95% confidence' mean?",
+    "choices": [
+      "If we repeated this procedure many times, 95% of such intervals would contain the true mean",
+      "There is a 95% probability the true mean is between 48 and 56",
+      "95% of the data falls between 48 and 56",
+      "The sample mean has a 95% chance of being correct"
+    ],
+    "correct_answer": "If we repeated this procedure many times, 95% of such intervals would contain the true mean",
+    "worked_example": "Once constructed, the interval either contains μ or it doesn't. '95% confidence' refers to the long-run procedure: 95% of all CIs built this way will capture the true parameter.",
+    "misconceptions": ["The most common misconception: treating CI as a probability statement about a fixed interval", "Thinking CI describes where 95% of the data lies"]
+  },
+  {
+    "item_id": "ci_02",
+    "kc": "confidence_intervals",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "Which change will produce a WIDER 95% confidence interval?",
+    "choices": [
+      "Decreasing sample size",
+      "Increasing sample size",
+      "Decreasing the confidence level to 90%",
+      "Decreasing population variability"
+    ],
+    "correct_answer": "Decreasing sample size",
+    "worked_example": "CI width = 2 × z* × SE = 2 × z* × σ/√n. Smaller n → larger SE → wider CI. More data → more precision → narrower interval.",
+    "misconceptions": ["Thinking higher confidence always means narrower CI", "Forgetting that width depends on both z* and SE"]
+  },
+  {
+    "item_id": "ci_03",
+    "kc": "confidence_intervals",
+    "difficulty": 0.7,
+    "modality": "free_response",
+    "question": "A sample of n=64 has x̄=50 and σ=16. Construct a 95% CI for the population mean. (Use z*=1.96)",
+    "correct_answer": "(46.08, 53.92)",
+    "worked_example": "SE = σ/√n = 16/8 = 2. Margin of error = z* × SE = 1.96 × 2 = 3.92. CI = (50−3.92, 50+3.92) = (46.08, 53.92).",
+    "misconceptions": ["Using z*=2 as approximation (gives 46, 54)", "Forgetting to compute SE before multiplying by z*", "Adding/subtracting SE without multiplying by z*"]
+  }
+]
