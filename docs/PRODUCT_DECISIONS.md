@@ -2,6 +2,8 @@
 
 Companion to [TWO_PAGER.md](./TWO_PAGER.md). Twelve open decisions, grouped by impact. Each lists options, a default, and the rationale.
 
+> **Status legend:**  ✅ shipped · 🟡 pilot pick (default chosen) · ⬜ open
+
 ## A. Mastery progression
 
 **1. Mastery threshold to advance** — currently `mastery ≥ 0.80 AND stability ≥ 0.70`
@@ -23,11 +25,11 @@ Companion to [TWO_PAGER.md](./TWO_PAGER.md). Twelve open decisions, grouped by i
 
 ## B. Content & item bank
 
-**4. Items per KC** — 3–4 today; ~10 correct needed to master
+**4. Items per KC** — 9–10 today; ~10 correct needed to master ✅
 - (a) Hand-author 6 more per KC (~3 SME hours)
 - (b) LLM-generated variants at runtime
 - (c) Accept repetition (spaced-practice framing)
-- **Default: (a) for pilot.** *(Pilot pick.)*
+- **Shipped: (a). Item bank expanded from 20 → 56.** Floor enforced via `tests/test_content.py` (≥8/KC).
 
 **5. Dedicated `worked_example` items**
 - (a) No — any item can be presented as a worked example
@@ -56,11 +58,11 @@ Companion to [TWO_PAGER.md](./TWO_PAGER.md). Twelve open decisions, grouped by i
 - (c) Show worked example, no re-explain text
 - **Default: (b).** *(Pilot pick.)*
 
-**9. Confidence prompts**
+**9. Confidence prompts** ✅
 - (a) Every turn (current) — best routing signal
 - (b) Only after re-explain or worked_example
 - (c) Learner-toggleable
-- **Default: (b).** *(Pilot pick.)*
+- **Shipped: (b).** Server returns `confidence_prompt: null` for routine turns; UI hides the slider. Tested in `tests/test_app.py::test_*confidence*`.
 
 **10. Misconception transparency** — should the tutor name the misconception it detected?
 - (a) Yes — "It looks like you mixed up mean and median, which is common"
@@ -88,3 +90,20 @@ Companion to [TWO_PAGER.md](./TWO_PAGER.md). Twelve open decisions, grouped by i
 ## Pilot-lead recommendation
 
 Take **defaults except #2, #4, #8, #9, #11** — the five non-default picks aim at reducing pilot brittleness. All other decisions can be revisited mid-pilot with telemetry.
+
+---
+
+## Post-review changelog
+
+Items shipped after the tech-lead / CPO review on 2026-05-15:
+
+| Decision | What shipped |
+|----------|--------------|
+| **#4 — items per KC** | Item bank 20 → 56 (≥9 per KC). Coverage floor enforced via `tests/test_content.py`. |
+| **#9 — confidence prompts** | Friction-gated server-side; UI hides slider when not needed. |
+| **Bonus — auditability wedge** | New `TurnResponse.tutor_reason` field surfaces a learner-friendly reason for every adaptation move; rendered as a 💡 banner above each tutor bubble. |
+
+Code-quality items also shipped (tech-lead review F1–F6):
+`KC_LABELS` import fix · per-session `asyncio.Lock` + idle TTL eviction · `TurnLog` mutation safety · shared `src/engine.py` extracted · `tests/test_app.py` (14 tests) · `ContentStore.get_item` returns typed `Exercise` · env-driven model IDs · robust JSON extraction · one retry on transient API error.
+
+Tests grew from 51 → 79.

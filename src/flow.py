@@ -7,60 +7,20 @@ Only the `respond` step calls the LLM. Every other step is deterministic.
 
 from __future__ import annotations
 
-import json
 import logging
-import random
-from pathlib import Path
-from typing import Any
 
 from crewai.flow.flow import Flow, listen, router, start
 
+from src.engine import grade as engine_grade
+from src.engine import log_turn as engine_log_turn
 from src.policy import Action, PolicyDecision, decide, update_skill_after_turn
+from src.primitives import Exercise
 from src.prompts import load_prompt, render_prompt
-from src.state import KC, LearnerState, Modality, TurnLog
+from src.state import KC_LABELS, LearnerState, Modality
+from src.tools.content_store import ContentStore
 from src.tools.llm_tool import call_llm
 
 logger = logging.getLogger(__name__)
-
-_ITEMS_PATH = Path(__file__).parent / "content" / "items.json"
-
-_KC_LABELS: dict[KC, str] = {
-    KC.MEAN_MEDIAN: "Mean and Median",
-    KC.VARIANCE: "Variance and Standard Deviation",
-    KC.Z_SCORES: "Z-Scores",
-    KC.SAMPLING_DISTRIBUTIONS: "Sampling Distributions",
-    KC.STANDARD_ERROR: "Standard Error",
-    KC.CONFIDENCE_INTERVALS: "Confidence Intervals",
-}
-
-
-def _load_items() -> list[dict[str, Any]]:
-    data: list[dict[str, Any]] = json.loads(_ITEMS_PATH.read_text(encoding="utf-8"))
-    return data
-
-
-def _pick_item(
-    items: list[dict[str, Any]],
-    kc: KC,
-    modality: Modality | None,
-    exclude_ids: list[str] | None = None,
-) -> dict[str, Any] | None:
-    """Select an item for the given KC, preferring the requested modality.
-
-    `worked_example` is treated as a presentation style applicable to any item,
-    so it is NOT used to filter the item pool.
-    """
-    pool = [i for i in items if i["kc"] == kc.value]
-    if exclude_ids:
-        pool = [i for i in pool if i["item_id"] not in exclude_ids]
-    if not pool:
-        pool = [i for i in items if i["kc"] == kc.value]
-
-    if modality and modality != "worked_example":
-        preferred = [i for i in pool if i["modality"] == modality]
-        if preferred:
-            return random.choice(preferred)
-    return random.choice(pool) if pool else None
 
 
 class TutorFlow(Flow[LearnerState]):
@@ -69,7 +29,7 @@ class TutorFlow(Flow[LearnerState]):
     def __init__(self, learner_id: str) -> None:
         super().__init__(initial_state=LearnerState(learner_id=learner_id))
         self._learner_id = learner_id
-        self._items: list[dict[str, Any]] = _load_items()
+        self._store = ContentStore()
         self._system_prompt: str = load_prompt("system")
         self._seen_item_ids: list[str] = []
 
@@ -128,26 +88,26 @@ class TutorFlow(Flow[LearnerState]):
                 self._display("Amazing — you've mastered everything in this session!")
                 return "done"
             self._display(
-                f"Excellent! Moving on to: **{_KC_LABELS[self.state.current_kc]}**"
+                f"Excellent! Moving on to: **{KC_LABELS[self.state.current_kc]}**"
             )
 
         modality: Modality = decision.suggested_modality or "explain"
         kc = self.state.current_kc
-        kc_label = _KC_LABELS[kc]
+        kc_label = KC_LABELS[kc]
 
         if action in ("re_explain", "light_re_explain"):
             explain_type = "re_explain" if action == "re_explain" else "light_re_explain"
             if self.state.current_skill.attempts == 0:
                 explain_type = "first_introduction"
 
-            item = _pick_item(self._items, kc, None)
+            item = self._store.get_item(kc, None)
             user_prompt = render_prompt(
                 "explain",
                 kc_label=kc_label,
                 mastery=f"{self.state.current_skill.mastery:.2f}",
-                misconceptions=", ".join(item["misconceptions"]) if item else "none",
+                misconceptions=", ".join(item.misconceptions) if item else "none",
                 explain_type=explain_type,
-                worked_example=item["worked_example"] if item else "",
+                worked_example=item.worked_example if item else "",
             )
             llm_out = call_llm(
                 self._system_prompt,
@@ -163,30 +123,28 @@ class TutorFlow(Flow[LearnerState]):
             return "policy_loop"
 
         if action in ("new_question", "change_modality"):
-            item = _pick_item(
-                self._items, kc, modality, exclude_ids=self._seen_item_ids
-            )
+            item = self._store.get_item(kc, modality, exclude_ids=self._seen_item_ids)
             if item is None:
-                item = _pick_item(self._items, kc, None)
+                item = self._store.get_item(kc, None)
             if item is None:
                 return "policy_loop"
 
-            self._seen_item_ids.append(item["item_id"])
+            self._seen_item_ids.append(item.item_id)
 
             # Presentation modality comes from the policy decision, not the item.
             # An MC or free-response item can be presented as a worked_example.
             presentation_modality: Modality = (
-                modality if modality == "worked_example" else item["modality"]
+                modality if modality == "worked_example" else item.modality
             )
 
             user_prompt = render_prompt(
                 "question",
                 kc_label=kc_label,
-                item_id=item["item_id"],
+                item_id=item.item_id,
                 modality=presentation_modality,
-                difficulty=item["difficulty"],
-                question=item["question"],
-                choices="\n".join(item.get("choices", [])),
+                difficulty=item.difficulty,
+                question=item.question,
+                choices="\n".join(item.choices),
             )
             llm_out = call_llm(
                 self._system_prompt,
@@ -211,18 +169,18 @@ class TutorFlow(Flow[LearnerState]):
                 return "policy_loop"
 
             learner_answer = self._get_input("Your answer: ").strip()
-            correct = self._grade(learner_answer, item["correct_answer"])
+            correct = self._grade(learner_answer, item.correct_answer)
             confidence = self._ask_confidence_score()
 
             feedback_prompt = render_prompt(
                 "feedback",
                 kc_label=kc_label,
-                question=item["question"],
-                correct_answer=item["correct_answer"],
+                question=item.question,
+                correct_answer=item.correct_answer,
                 learner_answer=learner_answer,
                 result="correct" if correct else "incorrect",
-                worked_example=item["worked_example"],
-                misconceptions=", ".join(item.get("misconceptions", [])),
+                worked_example=item.worked_example,
+                misconceptions=", ".join(item.misconceptions),
             )
             fb_out = call_llm(
                 self._system_prompt,
@@ -280,37 +238,16 @@ class TutorFlow(Flow[LearnerState]):
             return None
 
     def _grade(self, learner_answer: str, correct_answer: str) -> bool:
-        """Prototype grader: case-insensitive match with numeric tolerance.
-
-        Production should replace this with an LLM rubric-grader (see README).
-        """
-        a = learner_answer.strip().lower()
-        b = correct_answer.strip().lower()
-        if a == b:
-            return True
-        # Compare extracted numeric tokens, so "(46.08, 53.92)" == "46.08, 53.92" etc.
-        import re
-        nums_a = re.findall(r"-?\d+\.?\d*", a)
-        nums_b = re.findall(r"-?\d+\.?\d*", b)
-        if nums_a and nums_a == nums_b:
-            return True
-        return False
+        """Delegates to src.engine.grade — kept as a method so tests can patch it."""
+        return engine_grade(learner_answer, correct_answer)
 
     def _log_turn(
         self,
         modality: Modality,
-        item: dict[str, Any] | None,
+        item: Exercise | None,
         llm_response: str,
     ) -> None:
-        self.state.turn += 1
-        log = TurnLog(
-            turn=self.state.turn,
-            kc=self.state.current_kc,
-            modality=modality,
-            item_id=item["item_id"] if item else "none",
-            llm_response=llm_response,
-        )
-        self.state.history.append(log)
+        engine_log_turn(self.state, modality, item, llm_response)
 
     def _update_last_turn(
         self,

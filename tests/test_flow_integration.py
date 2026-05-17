@@ -145,3 +145,28 @@ def test_model_routing_threshold(learner_confidence: float | None, expected_mode
         assert actual == _HAIKU
     else:
         assert actual == _SONNET
+
+
+@patch("src.flow.call_llm", side_effect=_fake_llm)
+def test_execute_decision_advance_kc_does_not_crash(_mock_llm: Any) -> None:
+    """Regression: advance_kc branch in _execute_decision references KC_LABELS.
+
+    Catches the F1 NameError flagged in the tech-lead review — if the symbol
+    in flow.py:_execute_decision drifts from the import in state.py, this fails.
+    """
+    flow = _build_flow(answers=["8"], confidences=["7"])
+    # Mastered KC0 so advance_kc is the next sane move
+    flow.state.skills[KC.MEAN_MEDIAN].mastery = 0.95
+    flow.state.skills[KC.MEAN_MEDIAN].stability = 0.85
+    flow.state.skills[KC.MEAN_MEDIAN].attempts = 5
+
+    from src.policy import PolicyDecision
+    decision = PolicyDecision(action="advance_kc", reason="test")
+
+    # Must not raise NameError on KC_LABELS lookup.
+    result = flow._execute_decision(decision)
+
+    # After advance_kc, the new KC is fresh (attempts==0) → P0 intro is rendered
+    # in the same call, so flow returns "policy_loop" to continue the session.
+    assert result == "policy_loop"
+    assert flow.state.current_kc == KC.VARIANCE

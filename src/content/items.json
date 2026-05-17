@@ -259,5 +259,484 @@
     "correct_answer": "(46.08, 53.92)",
     "worked_example": "SE = σ/√n = 16/8 = 2. Margin of error = z* × SE = 1.96 × 2 = 3.92. CI = (50−3.92, 50+3.92) = (46.08, 53.92).",
     "misconceptions": ["Using z*=2 as approximation (gives 46, 54)", "Forgetting to compute SE before multiplying by z*", "Adding/subtracting SE without multiplying by z*"]
+  },
+  {
+    "item_id": "mm_05",
+    "kc": "mean_median",
+    "difficulty": 0.3,
+    "modality": "multiple_choice",
+    "question": "Dataset: 4, 6, 7, 7, 9, 12. The mode is:",
+    "choices": ["7", "6.5", "7.5", "There is no mode"],
+    "correct_answer": "7",
+    "worked_example": "The mode is the most frequent value. Here 7 appears twice; every other value appears once. So mode = 7.",
+    "misconceptions": ["Confusing mode with median", "Reporting the mean when asked for the mode"]
+  },
+  {
+    "item_id": "mm_06",
+    "kc": "mean_median",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "A dataset of 10 numbers has mean 12. After adding one new value, the mean rises to 13. What was the new value?",
+    "correct_answer": "23",
+    "worked_example": "Old total = 10 × 12 = 120. New total = 11 × 13 = 143. New value = 143 − 120 = 23.",
+    "misconceptions": ["Thinking the new value equals the new mean", "Forgetting that adding a value changes both numerator and denominator"]
+  },
+  {
+    "item_id": "mm_07",
+    "kc": "mean_median",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "For a strongly right-skewed distribution, which is typically TRUE?",
+    "choices": [
+      "Mean > Median",
+      "Mean < Median",
+      "Mean = Median",
+      "Mean and Median are unrelated to skew"
+    ],
+    "correct_answer": "Mean > Median",
+    "worked_example": "Right skew = long right tail. The tail pulls the mean toward larger values while the median (positional) is unaffected, so Mean > Median.",
+    "misconceptions": ["Reversing the direction of skew", "Confusing right-skew (positive) with left-skew (negative)"]
+  },
+  {
+    "item_id": "mm_08",
+    "kc": "mean_median",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "Class A has 20 students with mean score 80. Class B has 30 students with mean score 70. What is the combined mean for all 50 students?",
+    "choices": ["74", "75", "76", "77"],
+    "correct_answer": "74",
+    "worked_example": "Weighted by size: (20·80 + 30·70) / 50 = (1600 + 2100) / 50 = 3700/50 = 74. The smaller class pulls the combined mean toward its own value with less force.",
+    "misconceptions": ["Averaging the two means (gives 75 — wrong because classes are unequal sizes)", "Forgetting to weight by sample size"]
+  },
+  {
+    "item_id": "mm_09",
+    "kc": "mean_median",
+    "difficulty": 0.3,
+    "modality": "multiple_choice",
+    "question": "Which statement about the median is TRUE for a dataset of 7 numbers?",
+    "choices": [
+      "It is the 4th value when sorted",
+      "It is the average of the 3rd and 5th values",
+      "It is always equal to the mean",
+      "It depends on the values not their order"
+    ],
+    "correct_answer": "It is the 4th value when sorted",
+    "worked_example": "For odd n, the median is the (n+1)/2 -th value when sorted. With n=7, that is the 4th value.",
+    "misconceptions": ["Using the (n/2) position for odd n", "Averaging values for odd-length datasets"]
+  },
+  {
+    "item_id": "mm_10",
+    "kc": "mean_median",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "A dataset is 8, 12, 15, x, 21 (already sorted). The mean equals the median. Find x.",
+    "correct_answer": "19",
+    "worked_example": "Sorted, the median is the 3rd value = 15. So mean must also be 15. Sum = 8+12+15+x+21 = 56+x. Mean = (56+x)/5 = 15 → 56+x = 75 → x = 19. (Check x ≥ 15 so sort order holds — yes.)",
+    "misconceptions": ["Solving without checking that x preserves the sort order", "Confusing 'mean equals median' with 'data is symmetric'"]
+  },
+  {
+    "item_id": "var_04",
+    "kc": "variance",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "When estimating a POPULATION variance from a SAMPLE, why do we divide by (n-1) instead of n?",
+    "choices": [
+      "To correct for the bias introduced by using the sample mean (Bessel's correction)",
+      "Because the sample is smaller than the population",
+      "It is an arbitrary statistical convention",
+      "To avoid division by zero"
+    ],
+    "correct_answer": "To correct for the bias introduced by using the sample mean (Bessel's correction)",
+    "worked_example": "Sample deviations are computed from x̄, not μ, which slightly underestimates true spread. Dividing by n−1 instead of n compensates, giving an unbiased estimator of σ².",
+    "misconceptions": ["Thinking n vs n-1 is just preference", "Applying n-1 when the full population is observed (then use n)"]
+  },
+  {
+    "item_id": "var_05",
+    "kc": "variance",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "Compute the SAMPLE variance of: 3, 7, 7, 19. Show your work.",
+    "correct_answer": "54",
+    "worked_example": "Mean = (3+7+7+19)/4 = 9. Deviations: −6, −2, −2, 10. Squared: 36, 4, 4, 100. Sum = 144. Sample variance = 144/(4−1) = 144/3 = 48.",
+    "misconceptions": ["Dividing by n instead of n−1 (gives 36)", "Forgetting to square deviations before summing", "Computing population variance when sample is asked for"]
+  },
+  {
+    "item_id": "var_06",
+    "kc": "variance",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "If you add 10 to every value in a dataset, how does the variance change?",
+    "choices": [
+      "It does not change",
+      "It increases by 10",
+      "It increases by 100",
+      "It is multiplied by 10"
+    ],
+    "correct_answer": "It does not change",
+    "worked_example": "Adding a constant c shifts every value (and the mean) by c. Deviations from the mean are unchanged. So variance is invariant under translation.",
+    "misconceptions": ["Thinking shifts change spread", "Confusing shift (translation) with scale (multiplication)"]
+  },
+  {
+    "item_id": "var_07",
+    "kc": "variance",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "If you multiply every value in a dataset by 3, how does the variance change?",
+    "choices": [
+      "It is multiplied by 9",
+      "It is multiplied by 3",
+      "It does not change",
+      "It is multiplied by √3"
+    ],
+    "correct_answer": "It is multiplied by 9",
+    "worked_example": "Scaling values by c scales deviations by c. Squared deviations scale by c². So variance is multiplied by c². With c=3, new variance = 9 × old variance. (Note: SD scales by c.)",
+    "misconceptions": ["Forgetting variance involves squaring (people often say × 3)", "Confusing the effect on SD (×3) with the effect on variance (×9)"]
+  },
+  {
+    "item_id": "var_08",
+    "kc": "variance",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "Two datasets have the same mean. Dataset A has SD = 2; dataset B has SD = 5. Which is TRUE?",
+    "choices": [
+      "Dataset B's values are more spread out around the mean",
+      "Dataset B has more values",
+      "Dataset A is shifted higher",
+      "You cannot compare without seeing the data"
+    ],
+    "correct_answer": "Dataset B's values are more spread out around the mean",
+    "worked_example": "SD is a direct measure of spread in original units. Larger SD → values typically further from the mean. Sample size and center are unrelated to this comparison.",
+    "misconceptions": ["Reading SD as a count of values", "Thinking equal means imply equal SDs"]
+  },
+  {
+    "item_id": "var_09",
+    "kc": "variance",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "A dataset has variance 25. What is its standard deviation, and in what units (relative to the data) is each?",
+    "correct_answer": "SD = 5",
+    "worked_example": "SD = √variance = √25 = 5. SD is in the SAME units as the data (e.g. dollars), variance is in SQUARED units (dollars²). That is why SD is usually preferred for interpretation.",
+    "misconceptions": ["Reporting SD in squared units", "Forgetting to take the square root", "Reporting variance in original units"]
+  },
+  {
+    "item_id": "zs_05",
+    "kc": "z_scores",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "Under a standard normal distribution, approximately what percent of values have z-score between -1 and 1?",
+    "choices": ["68%", "95%", "50%", "99.7%"],
+    "correct_answer": "68%",
+    "worked_example": "Empirical (68-95-99.7) rule: about 68% of normal-distribution values fall within ±1 SD of the mean, 95% within ±2 SD, and 99.7% within ±3 SD.",
+    "misconceptions": ["Confusing the three thresholds in the empirical rule", "Applying the rule to non-normal distributions"]
+  },
+  {
+    "item_id": "zs_06",
+    "kc": "z_scores",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "Maya scored 88 on Test A (mean=80, SD=4). Liam scored 92 on Test B (mean=80, SD=10). Who performed better relative to their class?",
+    "choices": [
+      "Maya — her z-score is higher (2.0 vs 1.2)",
+      "Liam — his raw score is higher",
+      "They performed equally well",
+      "Cannot determine without the class size"
+    ],
+    "correct_answer": "Maya — her z-score is higher (2.0 vs 1.2)",
+    "worked_example": "z_Maya = (88-80)/4 = 2.0. z_Liam = (92-80)/10 = 1.2. Maya is 2 SDs above her class mean; Liam is only 1.2 SDs above. Higher z = stronger relative performance.",
+    "misconceptions": ["Comparing raw scores when scales differ", "Thinking higher raw means higher z"]
+  },
+  {
+    "item_id": "zs_07",
+    "kc": "z_scores",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "A z-score of 0 means:",
+    "choices": [
+      "The value equals the mean",
+      "The value is zero",
+      "The value is in the bottom 50%",
+      "There is no variability in the data"
+    ],
+    "correct_answer": "The value equals the mean",
+    "worked_example": "z = (x − μ)/σ. z = 0 implies x − μ = 0, so x = μ. The raw value sits exactly at the mean — no information about absolute size.",
+    "misconceptions": ["Confusing z=0 with raw value of 0", "Thinking z=0 implies median or percentile location more broadly than 50%"]
+  },
+  {
+    "item_id": "zs_08",
+    "kc": "z_scores",
+    "difficulty": 0.6,
+    "modality": "free_response",
+    "question": "IQ is normally distributed with mean 100 and SD 15. Approximately what percent of people have IQ above 130?",
+    "correct_answer": "2.5%",
+    "worked_example": "z = (130 − 100)/15 = 2. By the empirical rule, ~95% lie within ±2 SD, so ~5% lie outside. Symmetry splits that into ~2.5% above z=2 and ~2.5% below z=-2.",
+    "misconceptions": ["Reporting 5% (forgetting to split between tails)", "Using the wrong empirical-rule band"]
+  },
+  {
+    "item_id": "zs_09",
+    "kc": "z_scores",
+    "difficulty": 0.7,
+    "modality": "free_response",
+    "question": "On a test (mean=70, SD=8), what raw score corresponds to the 84th percentile? (Use z ≈ 1 for the 84th percentile.)",
+    "correct_answer": "78",
+    "worked_example": "84th percentile ≈ z = 1 (one SD above mean). Raw = μ + z·σ = 70 + 1·8 = 78.",
+    "misconceptions": ["Reading the percentile as the raw value", "Using the percentile number directly as z"]
+  },
+  {
+    "item_id": "zs_10",
+    "kc": "z_scores",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "Standardizing a dataset (subtracting mean, dividing by SD) changes its shape so that:",
+    "choices": [
+      "It now has mean 0 and SD 1, but the SHAPE is unchanged",
+      "It becomes normally distributed",
+      "It becomes uniformly distributed",
+      "Its mean becomes 1 and SD becomes 0"
+    ],
+    "correct_answer": "It now has mean 0 and SD 1, but the SHAPE is unchanged",
+    "worked_example": "Standardization is a linear transformation. It shifts and rescales so the result has mean 0 and SD 1, but skew/peaks/modes are preserved. A skewed distribution stays skewed after standardization.",
+    "misconceptions": ["Confusing standardization with normalization to a normal curve", "Thinking standardization removes skew or outliers"]
+  },
+  {
+    "item_id": "sd_04",
+    "kc": "sampling_distributions",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "For a sampling distribution of the mean, what is its expected value (mean of x̄ across all samples)?",
+    "choices": [
+      "The population mean μ",
+      "The sample mean x̄ from any single sample",
+      "Zero",
+      "It depends on the sample size"
+    ],
+    "correct_answer": "The population mean μ",
+    "worked_example": "E[x̄] = μ. The sampling distribution of the sample mean is centered at the true population mean — that is why x̄ is called an unbiased estimator of μ.",
+    "misconceptions": ["Thinking the mean of x̄ changes with n (only the spread does)", "Confusing the mean of the sampling distribution with the mean of a single sample"]
+  },
+  {
+    "item_id": "sd_05",
+    "kc": "sampling_distributions",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "The CLT may NOT give a good normal approximation in which situation?",
+    "choices": [
+      "Very small sample size (n < 10) from a strongly skewed population",
+      "Large sample (n = 200) from a slightly skewed population",
+      "Any sample from a normal population",
+      "Large sample from a uniform population"
+    ],
+    "correct_answer": "Very small sample size (n < 10) from a strongly skewed population",
+    "worked_example": "CLT requires the sample size to overcome the skew in the population. For mild skew, n=30 is usually enough. For strong skew (heavy outliers), even n=30 may be insufficient, and n<10 is rarely safe.",
+    "misconceptions": ["Believing CLT applies for any n", "Forgetting that population shape determines how fast x̄ approaches normality"]
+  },
+  {
+    "item_id": "sd_06",
+    "kc": "sampling_distributions",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "A population has σ = 24. What is the standard deviation of the sampling distribution of x̄ for samples of size n = 36?",
+    "correct_answer": "4",
+    "worked_example": "The SD of the sampling distribution is the standard error: SE = σ/√n = 24/√36 = 24/6 = 4.",
+    "misconceptions": ["Reporting σ unchanged (24)", "Dividing by n instead of √n", "Mixing up SD and SE terminology"]
+  },
+  {
+    "item_id": "sd_07",
+    "kc": "sampling_distributions",
+    "difficulty": 0.7,
+    "modality": "multiple_choice",
+    "question": "Heights have mean μ = 170 cm and SD σ = 10 cm. For random samples of n = 25, what is the approximate probability that x̄ > 174?",
+    "choices": ["About 2.5%", "About 16%", "About 25%", "About 5%"],
+    "correct_answer": "About 2.5%",
+    "worked_example": "SE = 10/√25 = 2. z = (174-170)/2 = 2. P(x̄ > 174) = P(Z > 2) ≈ 2.5% by the empirical rule.",
+    "misconceptions": ["Using σ instead of SE in the z computation", "Forgetting that probabilities about x̄ use the sampling distribution, not the raw distribution"]
+  },
+  {
+    "item_id": "sd_08",
+    "kc": "sampling_distributions",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "The 'population distribution' and the 'sampling distribution of x̄' differ in that:",
+    "choices": [
+      "The population distribution is the distribution of individual values; the sampling distribution is the distribution of sample means",
+      "Only the sampling distribution has a mean",
+      "They are identical for large n",
+      "The sampling distribution has fewer values"
+    ],
+    "correct_answer": "The population distribution is the distribution of individual values; the sampling distribution is the distribution of sample means",
+    "worked_example": "Population distribution describes raw observations (people's heights, say). Sampling distribution describes the statistic (mean) computed from samples. They share a center but have different spread (SE = σ/√n).",
+    "misconceptions": ["Confusing the two distributions when reading research", "Believing they converge to the same shape"]
+  },
+  {
+    "item_id": "sd_09",
+    "kc": "sampling_distributions",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "Why does the CLT require samples to be INDEPENDENT?",
+    "choices": [
+      "Dependence between observations changes the variance of x̄ and breaks the σ/√n formula",
+      "Independence is just a convention for tidy proofs",
+      "Without independence the mean becomes biased",
+      "Dependence only matters for proportions, not means"
+    ],
+    "correct_answer": "Dependence between observations changes the variance of x̄ and breaks the σ/√n formula",
+    "worked_example": "If observations are correlated, Var(x̄) is not σ²/n — it picks up covariance terms. The standard error formula and the CLT normal approximation no longer apply directly.",
+    "misconceptions": ["Treating independence as a minor formality", "Conflating independence with randomness"]
+  },
+  {
+    "item_id": "se_04",
+    "kc": "standard_error",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "A poll reports x̄ = 50 with SE = 2. Using the rule of thumb that a 95% CI is x̄ ± 2·SE, what is the approximate 95% CI?",
+    "correct_answer": "(46, 54)",
+    "worked_example": "Margin of error ≈ 2 × SE = 2 × 2 = 4. CI = (50 − 4, 50 + 4) = (46, 54). The 2·SE rule is the everyday shortcut for the more precise 1.96·SE.",
+    "misconceptions": ["Using SE directly without multiplying by 2", "Confusing margin of error with the SE itself"]
+  },
+  {
+    "item_id": "se_05",
+    "kc": "standard_error",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "A research paper reports 'mean = 12 (SE = 0.4)'. Which interpretation is BEST?",
+    "choices": [
+      "The estimated mean is 12, and the sample-to-sample variability of this estimate is about 0.4",
+      "Individual observations vary by about 0.4 around 12",
+      "The next observation will be between 11.6 and 12.4",
+      "There is a 95% chance the true mean is exactly 12"
+    ],
+    "correct_answer": "The estimated mean is 12, and the sample-to-sample variability of this estimate is about 0.4",
+    "worked_example": "SE quantifies how much x̄ would vary if the study were repeated — it speaks to estimation precision. The spread of individual observations is SD, not SE.",
+    "misconceptions": ["Reading SE as the spread of raw observations (that is SD)", "Treating SE as a probability statement about the true mean"]
+  },
+  {
+    "item_id": "se_06",
+    "kc": "standard_error",
+    "difficulty": 0.6,
+    "modality": "free_response",
+    "question": "A sampling distribution has SE = 3 for samples of size n = 100. What is the population standard deviation σ?",
+    "correct_answer": "30",
+    "worked_example": "SE = σ/√n → σ = SE · √n = 3 · √100 = 3 · 10 = 30.",
+    "misconceptions": ["Computing σ = SE · n (gives 300)", "Forgetting the square root entirely"]
+  },
+  {
+    "item_id": "se_07",
+    "kc": "standard_error",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "As sample size grows, the standard error of the mean:",
+    "choices": [
+      "Shrinks toward 0",
+      "Grows without bound",
+      "Stays constant",
+      "Approaches the population SD"
+    ],
+    "correct_answer": "Shrinks toward 0",
+    "worked_example": "SE = σ/√n. As n → ∞, √n → ∞ and SE → 0. Bigger samples give more precise estimates of μ.",
+    "misconceptions": ["Confusing SE with SD (SD doesn't change with n)", "Thinking SE rises with n"]
+  },
+  {
+    "item_id": "se_08",
+    "kc": "standard_error",
+    "difficulty": 0.7,
+    "modality": "multiple_choice",
+    "question": "For a sample proportion p̂, the standard error is √(p(1-p)/n). This is LARGEST when p equals:",
+    "choices": ["0.5", "0.0", "1.0", "0.1"],
+    "correct_answer": "0.5",
+    "worked_example": "The function p(1-p) is a downward-opening parabola peaking at p = 0.5, where p(1-p) = 0.25. Polls with split opinions (close to 50/50) therefore have the widest margin of error.",
+    "misconceptions": ["Picking extreme p values thinking they maximize uncertainty", "Forgetting that p(1-p) is maximized at the midpoint"]
+  },
+  {
+    "item_id": "se_09",
+    "kc": "standard_error",
+    "difficulty": 0.6,
+    "modality": "free_response",
+    "question": "A study with n = 50 has SE = 4. The researcher repeats the study with n = 200. Assuming σ is unchanged, what is the new SE?",
+    "correct_answer": "2",
+    "worked_example": "SE scales by 1/√n. Quadrupling n (50 → 200) shrinks SE by √4 = 2. New SE = 4 / 2 = 2.",
+    "misconceptions": ["Thinking quadrupling n quarters SE (it only halves it)", "Confusing the n-vs-SE relationship — it is square-root, not linear"]
+  },
+  {
+    "item_id": "ci_04",
+    "kc": "confidence_intervals",
+    "difficulty": 0.5,
+    "modality": "multiple_choice",
+    "question": "Comparing a 90% CI and a 99% CI computed from the SAME sample:",
+    "choices": [
+      "The 99% CI is wider",
+      "The 99% CI is narrower",
+      "They have the same width",
+      "It depends on the sample size"
+    ],
+    "correct_answer": "The 99% CI is wider",
+    "worked_example": "Higher confidence requires capturing more of the sampling distribution, so the critical value z* is larger (≈2.58 vs ≈1.645). With the same SE, a larger z* produces a wider interval. Trade-off: more confidence ↔ less precision.",
+    "misconceptions": ["Thinking higher confidence narrows the CI (it doesn't — it widens)", "Confusing the role of confidence level with the role of n"]
+  },
+  {
+    "item_id": "ci_05",
+    "kc": "confidence_intervals",
+    "difficulty": 0.7,
+    "modality": "free_response",
+    "question": "A sample of n = 100 has x̄ = 200 and σ = 30. Construct a 99% CI for the population mean. (Use z* = 2.576)",
+    "correct_answer": "(192.272, 207.728)",
+    "worked_example": "SE = 30/√100 = 3. Margin of error = 2.576 × 3 = 7.728. CI = (200 − 7.728, 200 + 7.728) = (192.272, 207.728).",
+    "misconceptions": ["Using z*=1.96 (that is for 95%, not 99%)", "Forgetting to compute SE before applying z*"]
+  },
+  {
+    "item_id": "ci_06",
+    "kc": "confidence_intervals",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "After computing a 95% CI of (10, 20), a student asks: 'What is the probability that the true mean lies in this specific interval?' The most accurate response is:",
+    "choices": [
+      "It is either in or out — the probability is 0 or 1; the 95% refers to the long-run success rate of the procedure",
+      "Exactly 95%",
+      "About 95%, give or take",
+      "0%, because samples are random"
+    ],
+    "correct_answer": "It is either in or out — the probability is 0 or 1; the 95% refers to the long-run success rate of the procedure",
+    "worked_example": "The true mean μ is a fixed (unknown) number, not a random variable. A specific interval either captures μ or it does not — there is no probability statement once the interval is fixed. The 95% applies to the PROCEDURE across hypothetical repetitions.",
+    "misconceptions": ["The classic interpretation error: assigning probability to a fixed interval", "Confusing frequentist and Bayesian probability statements"]
+  },
+  {
+    "item_id": "ci_07",
+    "kc": "confidence_intervals",
+    "difficulty": 0.6,
+    "modality": "multiple_choice",
+    "question": "When the population SD σ is UNKNOWN and n is small (say n=15), the appropriate CI uses:",
+    "choices": [
+      "The t-distribution (with n-1 degrees of freedom) and the sample SD",
+      "The z-distribution and the sample SD",
+      "The t-distribution and σ",
+      "Neither — a CI cannot be computed"
+    ],
+    "correct_answer": "The t-distribution (with n-1 degrees of freedom) and the sample SD",
+    "worked_example": "Using the sample SD adds extra uncertainty, especially with small n. The t-distribution has heavier tails than the normal to account for this. As n grows the t approaches z, and for large n the difference is negligible.",
+    "misconceptions": ["Defaulting to z when σ is unknown", "Forgetting to adjust degrees of freedom"]
+  },
+  {
+    "item_id": "ci_08",
+    "kc": "confidence_intervals",
+    "difficulty": 0.5,
+    "modality": "free_response",
+    "question": "A 95% CI for a mean has lower bound 42 and upper bound 58. What is the margin of error?",
+    "correct_answer": "8",
+    "worked_example": "The CI is symmetric around x̄. Width = 58 − 42 = 16. Margin of error = width / 2 = 8. So x̄ = 50 and ME = 8.",
+    "misconceptions": ["Reporting the full width as the margin of error", "Mixing up the upper bound with the margin"]
+  },
+  {
+    "item_id": "ci_09",
+    "kc": "confidence_intervals",
+    "difficulty": 0.4,
+    "modality": "multiple_choice",
+    "question": "A 95% CI for average commute time is (28, 36) minutes. Which statement is the most defensible plain-English summary?",
+    "choices": [
+      "We're 95% confident the true average commute is between 28 and 36 minutes",
+      "95% of commuters take between 28 and 36 minutes",
+      "There is a 95% chance the true average is 32 minutes",
+      "Every future commute will be between 28 and 36 minutes"
+    ],
+    "correct_answer": "We're 95% confident the true average commute is between 28 and 36 minutes",
+    "worked_example": "The everyday phrasing 'we're 95% confident' is acceptable shorthand for the long-run procedure interpretation. It says nothing about individual commuters or future trips — only about the population MEAN.",
+    "misconceptions": ["Confusing CI for the mean with a prediction interval for individuals", "Assigning a literal probability to a fixed interval"]
   }
 ]
