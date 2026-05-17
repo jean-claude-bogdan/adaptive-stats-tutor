@@ -284,34 +284,48 @@ def test_confidence_can_be_omitted(_mock: Any, client: TestClient) -> None:
 
 @patch("src.app.call_llm", side_effect=_fake_llm)
 def test_per_session_lock_serialises_concurrent_turns(_mock: Any, client: TestClient) -> None:
-    """Two concurrent turns on the same session must not corrupt state.turn.
+    """Two concurrent turns on the same session must not corrupt state.
 
     Without the per-session asyncio.Lock, both turns could read state.turn=N,
-    bump it to N+1, and end with one TurnLog lost. The lock means the second
-    call sees the first call's increment.
+    bump it to N+1, and end with one TurnLog lost (or pending_item/seen_ids
+    corrupted across awaits).
+
+    With the lock, requests are serialised. One may legitimately return 422
+    (if the first request moved the session to question-pending mode and the
+    second sent no answer) — that's correct serialised behaviour, not corruption.
     """
     sid = client.post("/api/session", json={}).json()["session_id"]
     initial_turn = _sessions[sid].state.turn
+    initial_history_len = len(_sessions[sid].state.history)
 
-    # TestClient is sync but spawns its own event loop per call; to actually
-    # exercise the lock we drive asyncio.gather inside a fresh event loop on
-    # the underlying ASGI app.
     from httpx import ASGITransport, AsyncClient
 
-    async def hit() -> int:
+    async def hit() -> tuple[int, int, list[int]]:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             results = await asyncio.gather(
-                ac.post(f"/api/turn/{sid}", json={"answer": None, "confidence": 0.5}),
-                ac.post(f"/api/turn/{sid}", json={"answer": None, "confidence": 0.6}),
+                ac.post(f"/api/turn/{sid}", json={"answer": "any", "confidence": 0.5}),
+                ac.post(f"/api/turn/{sid}", json={"answer": "any", "confidence": 0.6}),
             )
-        for r in results:
-            assert r.status_code == 200, r.text
-        return _sessions[sid].state.turn
+        statuses = [r.status_code for r in results]
+        return _sessions[sid].state.turn, len(_sessions[sid].state.history), statuses
 
-    final_turn = asyncio.run(hit())
-    # Each turn logs at least one TurnLog (the explain), so final_turn should
-    # be initial_turn + 2 — never +1 (which would mean one was lost).
-    assert final_turn >= initial_turn + 2, (
-        f"Lost a turn under concurrency: initial={initial_turn}, final={final_turn}"
+    final_turn, final_history_len, statuses = asyncio.run(hit())
+
+    # Both requests must terminate cleanly (200 or 422 — 422 is a legitimate
+    # serialised refusal). No 500s, no hangs.
+    for status in statuses:
+        assert status in (200, 422), f"Unexpected status {status}"
+    assert 200 in statuses, "At least one concurrent turn should have succeeded"
+
+    # State must advance monotonically — no lost turns, no duplicate increments.
+    # Successful turns each append exactly one TurnLog; failed turns append none.
+    successes = statuses.count(200)
+    assert final_history_len == initial_history_len + successes, (
+        f"History length corruption: initial={initial_history_len}, "
+        f"final={final_history_len}, successes={successes}"
+    )
+    assert final_turn == initial_turn + successes, (
+        f"Turn counter corruption: initial={initial_turn}, "
+        f"final={final_turn}, successes={successes}"
     )

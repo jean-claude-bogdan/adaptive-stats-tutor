@@ -118,6 +118,11 @@ class TutorFlow(Flow[LearnerState]):
             )
             self._display(llm_out["message"])
             self._log_turn(modality="explain", item=item, llm_response=llm_out["message"])
+            # Mark this KC as introduced so P0 stops firing and P5b can advance
+            # us to a question on the next policy call.
+            if self.state.current_skill.attempts == 0:
+                self.state.current_skill.attempts += 1
+            self.state.current_skill.last_modality = "explain"
             if llm_out.get("confidence_prompt"):
                 self._ask_confidence(llm_out["confidence_prompt"])
             return "policy_loop"

@@ -278,6 +278,13 @@ async def _execute_next_step(
             state.last_turn.confidence if state.last_turn else None,
         )
         _log_turn(state, "explain", item, llm_out["message"])
+        # Mark this KC as "introduced". Bumping attempts here lets P0 stop firing,
+        # and setting last_modality lets P5b advance us to the first question on
+        # the next decide() call. Without this, the flow would loop forever on
+        # explain turns (latent bug surfaced by the browser smoke test).
+        if first_encounter:
+            state.current_skill.attempts += 1
+        state.current_skill.last_modality = "explain"
         session.pending_kind = "explain"
         session.pending_item = None
         confidence_prompt = _confidence_prompt_for(

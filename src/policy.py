@@ -114,6 +114,23 @@ def decide(state: LearnerState) -> PolicyDecision:
             suggested_modality=skill.last_modality or "multiple_choice",
         )
 
+    # Priority 5b: after any non-graded turn (intro, re-explain, worked example),
+    # if mastery is still below threshold, ask a question to gather signal.
+    # P3 still wins on 2+ consecutive failures so this doesn't prevent escalation.
+    # Without this rule the flow would loop on light_re_explain after every explain
+    # — graded answers are the only way to bump mastery.
+    if (
+        last is not None
+        and last.correct is None
+        and skill.last_modality in ("explain", "worked_example")
+        and skill.mastery < MASTERY_ADVANCE
+    ):
+        return PolicyDecision(
+            action="new_question",
+            reason="Ready to test understanding after explanation",
+            suggested_modality="multiple_choice",
+        )
+
     # Priority 6: default — light re-explanation to consolidate
     return PolicyDecision(
         action="light_re_explain",
