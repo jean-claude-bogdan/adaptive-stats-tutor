@@ -1,107 +1,76 @@
-# Adaptive Statistics Tutor — Solution Two-Pager
+# Adaptive Statistics Tutor — Two-Pager
 
-**Status:** v1 prototype complete, pilot-ready pending 5 product decisions.
-**Audience:** Product, Eng leadership, Pilot sponsor.
-**Owner:** Tutor team.
+**Status:** v1 prototype shipped (PR #1). **Audience:** Eng leadership, Product, Pilot sponsor.
 
----
-
-## 1. Problem
-
-Introductory Statistics has high failure rates; the core barrier is *unevenly distributed misconceptions*. Some students breeze through means and medians but stall on z-scores; others reverse that. A single lecture cadence under-serves both ends. Office hours don't scale.
-
-**Goal:** give every learner an always-available 1:1 tutor that adapts in real time — explaining where they're stuck, advancing when they're not, at a cost that fits inside a course budget.
-
-## 2. Solution
-
-A six-KC adaptive tutor that separates **pedagogical decisions** (deterministic Python) from **content generation** (Claude). Every learner turn flows through:
-
-```
-initialize → diagnose → policy → respond → next_question → (loop)
-            └──── pure Python ────┘   └─ LLM ─┘
-```
-
-**Policy engine** ranks 7 priorities; first match wins:
-
-| Priority | Trigger | Action |
-|---|---|---|
-| P0 | Fresh KC (`attempts == 0`) | Introduce the concept |
-| P1 | Learner confidence `< 0.45` | Full re-explain |
-| P2 | Mastery `≥ 0.80` AND stability `≥ 0.70` | Advance to next KC |
-| P3 | 2+ consecutive failures in same modality | Change presentation style |
-| P4 | Last answer incorrect | Re-explain |
-| P5 | Correct but mastery still building | Another question |
-| P6 | Default | Light consolidation nudge |
-
-The rules are *opinionated but explicit* — every decision the system makes is traceable to a single rule on a single line. No "the model decided" black box.
-
-**Two-tier LLM routing:** Haiku for cost-efficient default content, Sonnet escalation only when a learner reports low confidence (~10–20% of turns). Projected cost: **~$700/month at 10,000 learners × 12 turns/month**.
-
-## 3. Why this design
-
-| Choice | Alternative | Why we chose this |
-|---|---|---|
-| Pure-Python policy | LLM-driven tutor | Auditability, golden-trace regression tests, predictable cost |
-| Pydantic state | Free-form dicts | Catches schema drift early; serializes cleanly to Postgres JSONB |
-| CrewAI Flows | Hand-rolled state machine | Standard primitives for routing + state; team already familiar |
-| Markdown prompt templates | Inline strings | Non-engineers can iterate on tutor voice without touching Python |
-| JSONL golden traces | Snapshot tests | CI gate is human-readable; PMs can review pedagogy without IDE |
-
-## 4. What's working today
-
-- **9 source modules**, ~800 LOC, 51 passing tests (10 golden traces + 8 flow-integration regressions + 33 unit)
-- **Strict mypy + ruff** in CI on every push
-- **Three reviewer-found bugs already fixed** (no-intro on KC transition, worked-example infinite loop, missing-API-key crash)
-- **Runnable demo:** `python -m src.demo` walks a learner through all 6 KCs end-to-end
-- **20-item question bank** spanning all KCs at difficulties 0.2–0.7, with worked examples and per-item misconception flags
-
-## 5. Pre-pilot decisions needed
-
-Five product calls block the pilot. Defaults shown; pilot lead picks final values.
-
-| # | Decision | Default | Why it matters |
-|---|---|---|---|
-| 1 | **Stability growth model** — current saturates after 4 correct in a row; one slip resets too much | Switch to linear `+0.10`/answer | Pacing — current model overrewards perfect streaks |
-| 2 | **Items per KC** — 3 today, ~10 needed to master | Author 6 more per KC (~3 SME hours) | Forced repetition without variety hurts pedagogy |
-| 3 | **Wrong-answer behavior** — re-explain immediately vs. let them retry | Offer one retry first | Retrieval practice > immediate hint per education research |
-| 4 | **Confidence prompts** — every turn vs. only after re-explain | Only after re-explain | Prompt fatigue; signal still good enough for routing |
-| 5 | **Free-response grading** — keep prototype string-match vs. drop to MC-only for pilot | MC-only for v1 | Removes a class of frustration; revisit with LLM rubric grader |
-
-Seven more decisions can be revisited *during* the pilot (mastery threshold, KC ordering, session length, Sonnet routing threshold, etc.). See [docs/PRODUCT_DECISIONS.md](./PRODUCT_DECISIONS.md) for the full list.
-
-## 6. What's intentionally stubbed
-
-| Component | v1 stub | Pilot requirement | Production requirement |
-|---|---|---|---|
-| **Canvas LTI 1.3** | `canvas_stub.py` returns dev fixture | PyLTI1p3 integration | Same + roster sync via NRPS |
-| **Persistence** | In-memory dict | Postgres JSONB per `learner_id` | Same + Redis lock per learner |
-| **Grader** | String + numeric-token match | MC-only OR LLM rubric grader | LLM rubric grader with confidence scoring |
-| **Observability** | Python `logging` | Langfuse traces on every LLM call | Same + per-learner cost dashboards |
-
-Each stub is isolated behind a single seam. Policy engine, state models, and flow do not need to change to swap them.
-
-## 7. Risk register
-
-| Risk | Severity | Mitigation |
-|---|---|---|
-| Mastery threshold misjudges learners (false advance) | Medium | Golden-trace gate; tune thresholds in pilot post-mortem |
-| Item bank exhaustion → boring repetition | Medium | Decision #2 above; LLM-generated variants as v2 |
-| Cost overrun (Sonnet over-escalates) | Low | Per-learner cost ceiling enforced by router; alerts before threshold |
-| LLM produces unsafe / inaccurate stats content | Low | Strict JSON schema + fallback; system prompt forbids fabrication |
-| Privacy — confidence ratings tied to learner_id | Medium | Decision needed: instructor visibility, retention window |
-
-## 8. Cost & scale
-
-- **10k learners × 12 turns/month** → **~$700/mo on Haiku**, ~$3.5k–$4k/mo if Sonnet escalation hits 100%
-- **Scaling beyond 10k** requires: Redis lock per learner, async DB writes, and prompt caching (Anthropic's beta cuts repeat-prompt cost ~75%) — none of these change the policy engine
-- **One engineer can maintain the policy + content** indefinitely; LLM-side work is mostly prompt iteration which a non-engineer SME can drive
-
-## 9. Recommendation
-
-**Ship to pilot** with the 5 default decisions above, scoped to one course / ~200 students for 4 weeks. Instrument every policy decision and LLM call. Use pilot telemetry to tune thresholds and decide on persistence + LTI investment for general availability.
-
-**Estimated effort to pilot:** ~2 eng-weeks (LTI integration + Postgres persistence + Langfuse + 6 extra items per KC).
+**The problem.** Intro Stats has high failure rates, and the core barrier is *unevenly distributed misconceptions* — some students stall on z-scores, others on confidence intervals, and a single-cadence lecture under-serves both ends. Office hours don't scale. We want every learner to have an always-available 1:1 tutor that adapts in real time, at a cost a course budget can absorb.
 
 ---
 
-*Repo:* [README.md](../README.md) · *Tests:* `pytest -v` (51 passing) · *Policy spec:* [src/policy.py](../src/policy.py)
+## 1. Architecture
+
+**Shape: hybrid — single orchestrator wrapping a deterministic policy engine + targeted LLM call-outs.** Not multi-agent (no agent-to-agent free-form chat). Not LLM-driven routing (we route, but in pure Python). Not a single-blob orchestrator (policy is decoupled and unit-testable on its own).
+
+```
+HTTP request → FastAPI → policy.decide() → call_llm() → response
+                            └─ pure Python ─┘   └─ Claude ─┘
+```
+
+**Why this shape.** In education, *transparency beats sophistication*. A multi-agent system makes every adaptation untraceable — you can't tell an instructor "why did the tutor re-explain z-scores three times?" if the answer is buried in inter-agent chatter. An LLM-driven router adds 1–2 seconds of latency and a few cents per turn to a decision that's fundamentally rule-based. The hybrid keeps **deterministic decisions in Python** (auditable, free, instant, regression-tested via golden traces) and uses the **LLM only where it adds value** (rendering natural-language explanations and feedback). Every adaptation decision the tutor makes is one line of code in `src/policy.py`.
+
+## 2. Build vs. buy vs. partner
+
+| Layer | Choice | Specifics | Why |
+|---|---|---|---|
+| **LLM provider** | **Buy** | Anthropic Claude (Haiku 4.5 default; Sonnet 4.6 on friction, ~10% of turns) | Best structured-JSON adherence; prompt caching available; two-tier routing inside one provider/SDK; FERPA-friendly contract terms |
+| **API framework** | **Buy** | FastAPI + Pydantic | Async-first; OpenAPI for free; Pydantic enforces our state schema end-to-end |
+| **Orchestration** | **Buy** | CrewAI Flow for the CLI delivery surface; plain async handlers for the web surface | CrewAI gives us standard primitives without ceremony; we sidestep it where blocking `input()` would hurt us |
+| **Policy engine** | **Build** | ~150 lines of Python in `src/policy.py` (7 priorities, first-match-wins) | This *is* the IP. Auditability requires it be ours and inspectable. |
+| **State + content schema** | **Build** | Pydantic primitives (`Competency`, `Concept`, `Exercise`, `Rubric`, `Evidence`) | Decouples platform from course content — adding "Intro to Business Writing" requires zero code change |
+| **LMS integration** | **Partner** | Canvas via LTI 1.3 (PyLTI1p3) for v2 | Don't build an LMS; meet learners where they already are |
+| **Observability** | **Buy** (v2) | Langfuse + OpenTelemetry | Don't build a trace UI; just instrument the seams |
+| **Persistence** | **Build the seam, buy the store** | In-memory v1 → PostgreSQL JSONB v2 → Redis locks at 10k+ | State is Pydantic, serialization is one method call |
+
+## 3. Success metrics
+
+Three numbers, tracked from day one. *"Good"* is defined at 30 days, 90 days, and steady state.
+
+| Metric | What it measures | 30 days | 90 days | Steady state |
+|---|---|---|---|---|
+| **Mastery gain per session** | Pre/post diagnostic delta on the 6 KCs | **+5 pp** | **+10 pp** | **+15 pp** |
+| **Cost per learner-month** | Total Anthropic spend ÷ active learners (12 turns/learner/month assumption) | **< $0.10** (validate cost model) | **< $0.08** (Sonnet rate tuned) | **< $0.07** (prompt caching enabled) |
+| **Adaptation precision** | % of policy decisions matching golden-trace expectations + human SME spot-check | **80%** | **90%** | **95%** |
+
+Mastery gain is the only one that proves learning happened. Cost is the existential metric — if it drifts past $0.10/learner-month, the unit economics break for a public course. Adaptation precision is the auditability proof point — when an instructor or program director asks "why did the tutor do X?", we should be right 95% of the time without hand-waving.
+
+## 4. Top 3 risks
+
+The three I actually worry about (not all five from the standard list):
+
+| Risk | Why it's top-3 | Mitigation |
+|---|---|---|
+| **Hallucinated stats content** | A confident-sounding wrong explanation does worse than no tutor at all. Stats has lots of near-correct phrasings (e.g. CI misinterpretation) that look right but are pedagogically toxic. | Strict JSON schema with validation + safe fallback; system prompt explicitly forbids fabrication; golden eval gate on every PR; per-item misconception tags so the LLM is anchored on known-wrong patterns; SME audit on first 1,000 explanations sampled from pilot traces |
+| **Cost drift at scale** | Sonnet escalation rate is the dominant cost lever. If it creeps from 10% to 50% (because of poor confidence calibration), we 5× our bill. | Two-tier routing with explicit threshold; per-learner monthly cost ceiling with alert at 80%; prompt caching at v2 cuts repeat-prompt cost ~75%; nightly cost regression in CI once telemetry lands |
+| **Privacy / FERPA exposure** | Confidence ratings, mastery scores, and free-response text are educational records. One leak and the pilot is dead. | Anonymized learner IDs in all LLM prompts (we send `learner-a8f3`, not name or email); no PII in prompts ever (only KC name + mastery score); PII redaction layer before traces hit Langfuse; separate retention windows for graded answers (90 days) vs. confidence ratings (30 days); legal review before LTI roster sync turns on |
+
+**Not in top 3 and why.** *Latency* — Haiku turn-around is ~1–2s, well inside the "thinking moment" learners expect after submitting an answer. *Integration brittleness* — Canvas integration is contained behind a single 70-line stub; swapping it for PyLTI1p3 is a known quantity.
+
+## 5. What's NOT in v1 (and why)
+
+| Cut | Why we cut it |
+|---|---|
+| **Multi-agent free-form chat between agents** | Auditability killer — every adaptation would be untraceable to a line of code |
+| **Bayesian Knowledge Tracing / neural knowledge tracing** | Our EMA mastery score is good enough for v1 routing signal. BKT only earns its complexity if the *policy* is the model; we explicitly chose the opposite |
+| **RAG over textbook** | 56 curated items with misconception tags beat 10,000 mediocre retrievals on every metric that matters for v1 (precision, cost, latency) |
+| **Voice / multimodal** | Adds two integration seams without a clear pedagogy story at v1 scope |
+| **LTI 1.3 grade writeback** | Pilot uses CSV export of mastery scores. Writeback is a 1-day add once the pilot validates we have grades worth pushing |
+| **Cross-session memory** | Session-scoped state is enough for a one-course pilot. Cross-session requires persistence + privacy review + the consent flow we don't have yet |
+| **Custom UI framework** | Vanilla HTML/JS works for v1. React/Vue gets added when we need component reuse; before that it's just resume-driven development |
+| **Auto-generated content variants** | LLM-generated questions at runtime drift from the misconception-tagged item bank and break adaptation precision. Cap content generation at the prompt layer (explanations only) until we have rubric grading |
+
+Each cut is a *known seam*. None require re-architecting to add later.
+
+---
+
+**Recommendation.** Ship to pilot scoped to one course (~200 students, 4 weeks). Instrument every policy decision and every LLM call. Use pilot telemetry to tune the Sonnet escalation threshold and validate the cost-per-learner-month projection before committing to general-availability persistence + LTI integration. Estimated effort to pilot: **~2 eng-weeks** (LTI swap, Postgres persistence, Langfuse wiring, content review).
+
+*Repo:* [README.md](../README.md) · *Tests:* `pytest -v` (84 passing) · *Policy spec:* [`src/policy.py`](../src/policy.py) · *Decisions tracker:* [`PRODUCT_DECISIONS.md`](./PRODUCT_DECISIONS.md)

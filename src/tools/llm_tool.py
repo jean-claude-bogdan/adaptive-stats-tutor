@@ -12,6 +12,8 @@ import logging
 import os
 from typing import Any
 
+import re
+
 import anthropic
 from dotenv import load_dotenv
 
@@ -27,11 +29,12 @@ def _ensure_env_loaded() -> None:
         load_dotenv()
         _dotenv_loaded = True
 
-# Model IDs
-_HAIKU = "claude-haiku-4-5-20251001"
-_SONNET = "claude-sonnet-4-6"
+# Model IDs — overridable via env so we can flip versions without a deploy.
+_HAIKU = os.environ.get("TUTOR_HAIKU_MODEL", "claude-haiku-4-5-20251001")
+_SONNET = os.environ.get("TUTOR_SONNET_MODEL", "claude-sonnet-4-6")
 
 _MAX_TOKENS = 1024
+_MAX_RETRIES = 1  # one retry on transient APIError before falling back
 
 _VALID_ACTIONS = {"explained", "asked_question", "gave_feedback"}
 
@@ -75,6 +78,17 @@ def _fallback_response(action: str = "explained") -> dict[str, Any]:
     }
 
 
+def _extract_json_object(raw: str) -> str | None:
+    """Pull the outermost JSON object out of an LLM response.
+
+    The old implementation dropped every line starting with backticks, which
+    corrupted any JSON whose `message` field happened to contain a code block.
+    This grabs the first balanced ``{ ... }`` span instead.
+    """
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    return match.group(0) if match else None
+
+
 def call_llm(
     system_prompt: str,
     user_prompt: str,
@@ -82,27 +96,32 @@ def call_llm(
 ) -> dict[str, Any]:
     """Call the appropriate Claude model and return a validated response dict.
 
-    Args:
-        system_prompt: The rendered system/instruction prompt.
-        user_prompt: The rendered user-facing prompt (explain / question / feedback).
-        learner_confidence: Last reported learner confidence (0.0–1.0). Drives model selection.
-
-    Returns:
-        Validated dict with keys: message, action_taken, confidence_prompt.
+    Retries once on transient APIError before returning the safe fallback.
     """
     model = _select_model(learner_confidence)
     logger.debug("LLM call | model=%s | confidence=%s", model, learner_confidence)
 
-    try:
-        client = _get_client()
-        response = client.messages.create(
-            model=model,
-            max_tokens=_MAX_TOKENS,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-    except (anthropic.APIError, OSError) as exc:
-        logger.error("LLM call failed: %s", exc)
+    last_exc: Exception | None = None
+    response = None
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            client = _get_client()
+            response = client.messages.create(
+                model=model,
+                max_tokens=_MAX_TOKENS,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_prompt}],
+            )
+            break
+        except anthropic.APIError as exc:
+            last_exc = exc
+            logger.warning("LLM call attempt %d failed: %s", attempt + 1, exc)
+        except OSError as exc:
+            # Missing API key etc — no point retrying.
+            logger.error("LLM call failed (no retry): %s", exc)
+            return _fallback_response()
+    if response is None:
+        logger.error("LLM call failed after retries: %s", last_exc)
         return _fallback_response()
 
     raw_text = ""
@@ -111,17 +130,16 @@ def call_llm(
             raw_text = block.text.strip()
             break
 
-    # Strip markdown code fences if the model wrapped JSON in ```json ... ```
-    if raw_text.startswith("```"):
-        lines = raw_text.splitlines()
-        raw_text = "\n".join(
-            line for line in lines if not line.startswith("```")
-        ).strip()
+    # Pull out the JSON object — robust to leading/trailing prose or code fences.
+    json_blob = _extract_json_object(raw_text)
+    if json_blob is None:
+        logger.warning("LLM returned no JSON object: %r", raw_text[:200])
+        return _fallback_response()
 
     try:
-        data: dict[str, Any] = json.loads(raw_text)
+        data: dict[str, Any] = json.loads(json_blob)
     except json.JSONDecodeError:
-        logger.warning("LLM returned non-JSON: %r", raw_text[:200])
+        logger.warning("LLM returned invalid JSON: %r", json_blob[:200])
         return _fallback_response()
 
     if not _validate_response(data):

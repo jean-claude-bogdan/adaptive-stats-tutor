@@ -1,6 +1,6 @@
 # Adaptive Statistics Tutor v1
 
-An adaptive learning tutor for Introductory Statistics, built with **CrewAI Flows** and **Anthropic Claude**. The design separates pedagogical decision-making (pure Python rules) from content generation (LLM-powered).
+An adaptive learning tutor for Introductory Statistics, built with **CrewAI Flows**, **FastAPI**, and **Anthropic Claude**. The design separates pedagogical decision-making (pure Python rules) from content generation (LLM-powered) — every routing decision is auditable to a single line of policy code.
 
 ## What it does
 
@@ -8,36 +8,100 @@ The tutor walks a learner through six knowledge components — `mean_median`, `v
 
 ## Architecture
 
+Two delivery surfaces share the same policy + content + LLM core:
+
 ```
-initialize → diagnose → policy → respond → next_question
-                          ↑                      │
-                          └──────────────────────┘
+                         ┌─── CLI demo (src/demo.py + src/flow.py, blocking input)
+src/policy.py            │
+src/engine.py    ────────┤
+src/tools/...            │
+src/content/...          └─── FastAPI web (src/app.py + src/web/index.html, request/response)
 ```
 
-- **initialize / diagnose / policy / next_question** → pure Python ([`src/policy.py`](src/policy.py))
-- **respond** → only step that calls Claude ([`src/tools/llm_tool.py`](src/tools/llm_tool.py))
-- **State** → Pydantic models threaded through the flow ([`src/state.py`](src/state.py))
+- **`src/policy.py`** — Deterministic 7-priority rule engine (no LLM)
+- **`src/engine.py`** — Shared turn primitives (grade, log_turn, build_progress) used by both surfaces so CLI and web never drift
+- **`src/state.py`** — Pydantic models: `LearnerState`, `SkillState`, `TurnLog`, `KC_LABELS`
+- **`src/primitives.py`** — Canonical content catalog: `Competency`, `Concept`, `Exercise`, `Rubric`, `Evidence`
+- **`src/tools/llm_tool.py`** — Two-tier Claude routing with robust JSON extraction, env-driven model IDs, and one retry on transient APIError
+- **`src/tools/content_store.py`** — Typed item-bank access (`get_item → Exercise | None`)
+- **`src/app.py`** — FastAPI server: `POST /api/session`, `POST /api/turn/{sid}`, `GET /api/session/{sid}`, with per-session `asyncio.Lock` + idle TTL eviction
+- **`src/web/index.html`** — Vanilla HTML/JS chat UI (no build step, no CDN)
 
 ### Policy priorities (first match wins)
 
-1. Low learner confidence → `re_explain`
-2. High mastery + stability → `advance_kc`
-3. Repeated failures in same modality → `change_modality`
-4. Incorrect answer → `re_explain`
-5. Correct but mastery still low → `new_question`
-6. Default → `light_re_explain`
+1. **P0** Fresh KC (`attempts == 0`) → `re_explain` (first introduction)
+2. **P1** Low learner confidence (`< 0.45`) → `re_explain`
+3. **P2** High mastery + stability → `advance_kc` (or `session_complete` on final KC)
+4. **P3** Repeated failures (≥2) in same modality → `change_modality` (rotates to `worked_example`)
+5. **P4** Incorrect last answer → `re_explain`
+6. **P5** Correct but mastery still low → `new_question`
+7. **P5b** Non-graded last turn (intro / re-explain / worked example) → `new_question` *(prevents infinite-explain loops)*
+8. **P6** Default → `light_re_explain`
 
 ### Two-tier model routing
 
-- **Haiku** (`claude-haiku-4-5-20251001`) — default, cost-efficient
-- **Sonnet** (`claude-sonnet-4-6`) — escalated when learner confidence falls below 0.45
+- **Haiku** (default, cost-efficient) — env override: `TUTOR_HAIKU_MODEL`
+- **Sonnet** (escalated when learner confidence falls below 0.45) — env override: `TUTOR_SONNET_MODEL`
+
+### Confidence prompts only on friction (Decision #9b)
+
+The server returns `confidence_prompt: null` for routine turns. The slider is only shown — and the rating only requested — after `re_explain` (following a wrong answer) or a `worked_example`. This kills survey fatigue and keeps the confidence signal a meaningful routing input.
+
+### Auditability wedge (`tutor_reason`)
+
+Every `/api/turn` response includes a learner-facing `tutor_reason` (e.g. *"That answer wasn't quite right — let me re-explain."*) translated from the policy's machine-readable rationale. The UI renders it as a 💡 italic banner above the tutor bubble. This makes adaptation visible to learners and to instructors auditing the system.
 
 ## Quickstart
 
 ```bash
 pip install -r requirements-dev.txt
 cp .env.example .env             # then add your ANTHROPIC_API_KEY
-pytest                            # 41 tests, ~1s
+pytest                            # 84 tests, ~5s
+```
+
+> **New to the repo?** [`GETTING_STARTED.md`](GETTING_STARTED.md) walks through clone → install → run in 5 minutes, plus troubleshooting.
+
+### Run the CLI demo
+
+```bash
+python -m src.demo --learner alice
+```
+
+### Run the web server
+
+```bash
+python -m src.app                                       # serves on http://0.0.0.0:8000
+# or for development with auto-reload:
+python -m uvicorn src.app:app --reload --port 8000
+```
+
+Then open `http://localhost:8000/` for the chat UI.
+
+### API surface
+
+```
+POST /api/session            → start session; returns first tutor message + tutor_reason
+POST /api/turn/{session_id}  → submit {answer, confidence} (both optional); receive feedback + next step
+GET  /api/session/{session_id}  → read progress without advancing
+GET  /docs                   → OpenAPI (auto-generated by FastAPI)
+```
+
+### Local dev with Claude Code preview
+
+The preview MCP can manage the server via `.claude/launch.json` (gitignored). Drop this in:
+
+```json
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tutor",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "src.app:app", "--host", "127.0.0.1", "--port", "8765"],
+      "port": 8765
+    }
+  ]
+}
 ```
 
 ## Running tests, lint, and type-check
@@ -48,30 +112,58 @@ ruff check src/ tests/ canvas_stub.py        # lint
 mypy src/ canvas_stub.py                     # strict type-check
 ```
 
-The golden-trace test in [`tests/test_golden_traces.py`](tests/test_golden_traces.py) gates the build: CI fails if policy accuracy on the 10 frozen scenarios in [`src/evals/golden_traces.jsonl`](src/evals/golden_traces.jsonl) drops below 100%.
+The golden-trace test in [`tests/test_golden_traces.py`](tests/test_golden_traces.py) gates the build: CI fails if policy accuracy on the 12 frozen scenarios in [`src/evals/golden_traces.jsonl`](src/evals/golden_traces.jsonl) drops below 100%.
+
+Content coverage is gated separately in [`tests/test_content.py`](tests/test_content.py): ≥8 items per KC, unique IDs, every item carries misconception tags, every KC has at least one free-response variant.
 
 ## Project layout
 
 ```
 src/
-  state.py              # Pydantic models: LearnerState, SkillState, TurnLog
-  policy.py             # Deterministic policy engine (no LLM)
-  flow.py               # CrewAI Flow orchestration
-  content/items.json    # 20 curated questions across 6 KCs
-  prompts/              # system / explain / question / feedback Markdown templates
-  tools/llm_tool.py     # Two-tier Claude routing with JSON validation + fallback
-  evals/golden_traces.jsonl  # 10-case policy regression suite
-tests/                  # 41 unit + golden-trace tests
-canvas_stub.py          # LTI 1.3 placeholder (production replaces with PyLTI1p3)
+  app.py                    # FastAPI server (request/response orchestration)
+  flow.py                   # CrewAI Flow (CLI orchestration)
+  demo.py                   # CLI entry point
+  engine.py                 # Shared turn primitives (grade, log_turn, build_progress)
+  state.py                  # Pydantic models + KC enum + KC_LABELS
+  policy.py                 # Deterministic 7-priority engine (no LLM)
+  primitives.py             # Competency / Concept / Exercise / Rubric / Evidence
+  content/items.json        # 56 curated exercises across 6 KCs
+  prompts/                  # system / explain / question / feedback Markdown templates
+  tools/
+    llm_tool.py             # Two-tier Claude routing + robust JSON + retry
+    content_store.py        # Typed item-bank access (returns Exercise)
+  evals/golden_traces.jsonl # 12-case policy regression suite (CI gate)
+  web/index.html            # Vanilla HTML/JS chat UI
+tests/                      # 84 tests across 9 modules
+  test_app.py               # FastAPI happy + error paths, concurrency lock
+  test_content.py           # Coverage / schema guards on items.json
+  test_flow_integration.py  # CLI flow regression tests
+  test_golden_traces.py     # Policy regression CI gate
+  test_policy.py            # Per-priority unit tests
+  test_state.py / test_prompts.py / test_llm_tool.py / test_canvas_stub.py
+canvas_stub.py              # LTI 1.3 placeholder (production replaces with PyLTI1p3)
+docs/                       # TWO_PAGER + PRODUCT_DECISIONS strategy memos
 .github/workflows/ci.yml
 ```
 
 ## Intentionally stubbed for v1
 
 - **Canvas LTI 1.3** — see [`canvas_stub.py`](canvas_stub.py); production path: PyLTI1p3
-- **Persistence** — in-memory dict during demo; production: PostgreSQL JSONB
-- **Answer grading** — case-insensitive string match; production: LLM rubric-grader with confidence scoring
+- **Persistence** — in-memory dict with idle TTL eviction; production: PostgreSQL JSONB (state is already Pydantic, serialization is one method call)
+- **Answer grading** — case-insensitive string match with numeric-token tolerance; production: LLM rubric-grader with confidence scoring
 
 ## Scaling notes
 
-Reaching ~10,000 learners (12 turns/learner/month) requires Redis locking per `learner_id`, Langfuse observability, and a real LTI integration. The policy engine and data models scale unchanged. Estimated Haiku inference cost at that volume: ~$700/month (Sonnet would be 5–6× more, which is why the two-tier routing exists).
+Reaching ~10,000 learners (12 turns/learner/month) requires:
+
+- **Persistence**: swap the in-memory `_sessions` dict for Redis with per-session TTL (per-session `asyncio.Lock` already in place for the in-process case)
+- **Observability**: wire Langfuse + OpenTelemetry into `src/tools/llm_tool.py`
+- **LTI**: replace `canvas_stub.py` with PyLTI1p3 JWT validation
+- **Grading**: upgrade the string-match grader in `src/engine.py` to an LLM rubric-grader
+
+The policy engine, content catalog, and data models scale unchanged. Estimated Haiku inference cost at that volume: ~$700/month (Sonnet would be 5–6× more, which is why the two-tier routing exists).
+
+## Strategy documents
+
+- [`docs/TWO_PAGER.md`](docs/TWO_PAGER.md) — Executive summary, cost projection, pre-pilot decisions
+- [`docs/PRODUCT_DECISIONS.md`](docs/PRODUCT_DECISIONS.md) — 12 open product decisions with defaults + recommended pilot picks

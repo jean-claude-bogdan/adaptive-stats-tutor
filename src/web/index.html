@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistics Tutor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      color: #1a1a1a;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 16px 8px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1d4ed8;
+      margin-bottom: 8px;
+    }
+
+    #kc-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .kc-chip {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      border: 1.5px solid #d1d5db;
+      background: #f3f4f6;
+      color: #6b7280;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .kc-chip.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .kc-chip.mastered {
+      border-color: #16a34a;
+      background: #f0fdf4;
+      color: #15803d;
+    }
+
+    /* ── Chat area ── */
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bubble {
+      max-width: 78%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      line-height: 1.5;
+      font-size: 0.92rem;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .bubble.tutor {
+      align-self: flex-start;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-bottom-left-radius: 4px;
+    }
+
+    .tutor-reason {
+      align-self: flex-start;
+      font-size: 0.78rem;
+      color: #6b7280;
+      font-style: italic;
+      padding: 4px 10px 0;
+      max-width: 78%;
+      line-height: 1.4;
+    }
+
+    .tutor-reason::before {
+      content: "💡 ";
+      font-style: normal;
+    }
+
+    .bubble.learner {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .bubble.system {
+      align-self: center;
+      background: #fef9c3;
+      border: 1px solid #fde047;
+      color: #713f12;
+      font-size: 0.82rem;
+      border-radius: 8px;
+      padding: 6px 12px;
+    }
+
+    /* ── Footer / input area ── */
+    #input-area {
+      background: #fff;
+      border-top: 1px solid #e0e0e0;
+      padding: 12px 16px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #answer-row {
+      display: flex;
+    }
+
+    #answer {
+      width: 100%;
+      resize: none;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    #answer:focus { border-color: #2563eb; }
+    #answer.error { border-color: #dc2626; }
+
+    #confidence-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #confidence-row label {
+      font-size: 0.82rem;
+      color: #6b7280;
+      white-space: nowrap;
+      min-width: 140px;
+    }
+
+    #conf-slider {
+      flex: 1;
+      accent-color: #2563eb;
+      cursor: pointer;
+    }
+
+    #action-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    #submit-btn {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    #submit-btn:hover:not(:disabled) { background: #1d4ed8; }
+    #submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Completion banner ── */
+    #done-banner {
+      display: none;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 10px;
+      padding: 14px 18px;
+      text-align: center;
+      color: #15803d;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    /* ── Typing indicator ── */
+    .typing {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 10px 14px;
+    }
+
+    .typing span {
+      width: 7px;
+      height: 7px;
+      background: #9ca3af;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Statistics Tutor</h1>
+  <div id="kc-bar">
+    <span class="kc-chip" data-kc="mean_median">Mean &amp; Median <b>0%</b></span>
+    <span class="kc-chip" data-kc="variance">Variance <b>0%</b></span>
+    <span class="kc-chip" data-kc="z_scores">Z-Scores <b>0%</b></span>
+    <span class="kc-chip" data-kc="sampling_distributions">Sampling Dist. <b>0%</b></span>
+    <span class="kc-chip" data-kc="standard_error">Std. Error <b>0%</b></span>
+    <span class="kc-chip" data-kc="confidence_intervals">Conf. Intervals <b>0%</b></span>
+  </div>
+</header>
+
+<main id="chat"></main>
+
+<footer id="input-area">
+  <div id="answer-row">
+    <textarea id="answer" rows="2" placeholder="Type your answer…"></textarea>
+  </div>
+  <div id="confidence-row">
+    <label>Confidence: <span id="conf-val">5</span>/10</label>
+    <input type="range" id="conf-slider" min="0" max="10" value="5" />
+  </div>
+  <div id="action-row">
+    <button id="submit-btn" disabled>Loading…</button>
+  </div>
+</footer>
+
+<div id="done-banner">🎉 Session complete — great work!</div>
+
+<script>
+  "use strict";
+
+  const chat       = document.getElementById("chat");
+  const answerRow  = document.getElementById("answer-row");
+  const answerEl   = document.getElementById("answer");
+  const confSlider = document.getElementById("conf-slider");
+  const confVal    = document.getElementById("conf-val");
+  const submitBtn  = document.getElementById("submit-btn");
+  const inputArea  = document.getElementById("input-area");
+  const doneBanner = document.getElementById("done-banner");
+
+  let sessionId      = null;
+  let currentMode    = "explain"; // "explain" | "question" | "done"
+  let isWaiting      = false;
+
+  // ── KC bar ────────────────────────────────────────────────────────────────
+
+  function updateKcBar(progress, currentKc) {
+    progress.forEach(p => {
+      const chip = document.querySelector(`[data-kc="${p.kc}"]`);
+      if (!chip) return;
+      const pct = Math.round(p.mastery * 100);
+      chip.querySelector("b").textContent = pct + "%";
+      chip.classList.toggle("active",   p.kc === currentKc);
+      chip.classList.toggle("mastered", pct >= 80 && p.kc !== currentKc);
+    });
+  }
+
+  // ── Bubble helpers ────────────────────────────────────────────────────────
+
+  function appendBubble(text, role) {
+    const div = document.createElement("div");
+    div.className = `bubble ${role}`;
+    div.textContent = text;
+    chat.appendChild(div);
+    div.scrollIntoView({ behavior: "smooth", block: "end" });
+    return div;
+  }
+
+  function appendTutorReason(reason) {
+    if (!reason) return;
+    const div = document.createElement("div");
+    div.className = "tutor-reason";
+    div.textContent = reason;
+    chat.appendChild(div);
+  }
+
+  function appendTyping() {
+    const wrap = document.createElement("div");
+    wrap.className = "bubble tutor typing";
+    wrap.id = "typing-indicator";
+    wrap.innerHTML = "<span></span><span></span><span></span>";
+    chat.appendChild(wrap);
+    wrap.scrollIntoView({ behavior: "smooth", block: "end" });
+    return wrap;
+  }
+
+  function removeTyping() {
+    const el = document.getElementById("typing-indicator");
+    if (el) el.remove();
+  }
+
+  // ── Input mode ───────────────────────────────────────────────────────────
+
+  let showConfidence = false;  // toggled from response.confidence_prompt
+
+  function setInputMode(mode, confidencePrompt) {
+    currentMode = mode;
+    showConfidence = Boolean(confidencePrompt);
+    const confRow = document.getElementById("confidence-row");
+    const confLabel = confRow.querySelector("label");
+
+    if (mode === "done") {
+      inputArea.style.display = "none";
+      doneBanner.style.display = "block";
+      chat.appendChild(doneBanner);
+      doneBanner.scrollIntoView({ behavior: "smooth", block: "end" });
+      return;
+    }
+
+    answerRow.style.display = mode === "question" ? "flex" : "none";
+    confRow.style.display = showConfidence ? "flex" : "none";
+    if (showConfidence) {
+      // Render only the prefix; "0-10" label is already in the HTML span
+      confLabel.firstChild.textContent =
+        confidencePrompt.replace(/[?:.]\s*$/, "") + ": ";
+    }
+    submitBtn.textContent =
+      mode === "question" ? "Submit Answer" :
+      showConfidence ? "Rate & continue" : "Got it";
+    submitBtn.disabled = false;
+    if (mode === "question") {
+      answerEl.value = "";
+      answerEl.classList.remove("error");
+      answerEl.focus();
+    }
+  }
+
+  function disableInput() {
+    submitBtn.disabled = true;
+    answerEl.disabled  = true;
+    confSlider.disabled = true;
+    isWaiting = true;
+  }
+
+  function enableInput() {
+    answerEl.disabled   = false;
+    confSlider.disabled = false;
+    isWaiting = false;
+    // submitBtn enabled by setInputMode
+  }
+
+  // ── Confidence slider ─────────────────────────────────────────────────────
+
+  confSlider.addEventListener("input", () => {
+    confVal.textContent = confSlider.value;
+  });
+
+  // ── Handle turn submission ────────────────────────────────────────────────
+
+  async function submitTurn() {
+    if (isWaiting || currentMode === "done") return;
+
+    // Only attach a confidence value when the server actually asked for one.
+    const confidence = showConfidence ? parseInt(confSlider.value, 10) / 10 : null;
+    const confLabel = showConfidence ? `  (confidence ${confSlider.value}/10)` : "";
+    let answer = null;
+
+    if (currentMode === "question") {
+      answer = answerEl.value.trim();
+      if (!answer) {
+        answerEl.classList.add("error");
+        answerEl.focus();
+        return;
+      }
+      answerEl.classList.remove("error");
+      appendBubble(`Answer: ${answer}${confLabel}`, "learner");
+    } else {
+      appendBubble(`Got it${confLabel}`, "learner");
+    }
+
+    disableInput();
+    const typing = appendTyping();
+
+    try {
+      const res = await fetch(`/api/turn/${sessionId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer, confidence }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || res.statusText);
+      }
+
+      const data = await res.json();
+      removeTyping();
+      appendTutorReason(data.tutor_reason);
+      appendBubble(data.message, "tutor");
+      updateKcBar(data.progress, data.current_kc);
+      enableInput();
+      setInputMode(data.input_mode, data.confidence_prompt);
+    } catch (err) {
+      removeTyping();
+      appendBubble(`Error: ${err.message}. Please try again.`, "system");
+      enableInput();
+      setInputMode(currentMode, showConfidence ? "Confidence" : null); // restore previous mode
+    }
+  }
+
+  submitBtn.addEventListener("click", submitTurn);
+
+  answerEl.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitTurn();
+    }
+  });
+
+  answerEl.addEventListener("input", () => {
+    answerEl.classList.remove("error");
+  });
+
+  // ── Session initialisation ────────────────────────────────────────────────
+
+  async function init() {
+    appendTyping();
+    try {
+      const res = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+      const data = await res.json();
+      sessionId = data.session_id;
+      removeTyping();
+      appendTutorReason(data.tutor_reason);
+      appendBubble(data.message, "tutor");
+      updateKcBar(data.progress, data.current_kc);
+      setInputMode(data.input_mode, data.confidence_prompt);
+    } catch (err) {
+      removeTyping();
+      appendBubble(
+        `Could not connect to the tutor server.\n${err.message}`,
+        "system"
+      );
+      submitBtn.textContent = "Retry";
+      submitBtn.disabled = false;
+      submitBtn.onclick = () => { chat.innerHTML = ""; init(); };
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -99,6 +99,76 @@ def test_p6_default_light_re_explain() -> None:
     assert decision.action == "light_re_explain"
 
 
+def test_p5b_first_question_after_intro_explain() -> None:
+    """After P0 first_introduction, the next decide() must move to a question.
+
+    Without this rule the policy infinite-loops on first_introduction (P0)
+    or light_re_explain (P6). Regression for the bug surfaced by the browser
+    smoke test on 2026-05-15.
+    """
+    state = _state_with_turn(
+        correct=None,
+        confidence=0.7,
+        mastery=0.0,
+        consecutive_incorrect=0,
+        last_modality="explain",
+        attempts=1,
+    )
+    decision = decide(state)
+    assert decision.action == "new_question", (
+        f"Expected new_question after intro, got {decision.action}"
+    )
+    assert decision.suggested_modality == "multiple_choice"
+
+
+def test_p5b_fires_after_re_explain_one_wrong() -> None:
+    """After a single wrong answer + P4 re_explain, P5b gives the learner another
+    question rather than looping on light_re_explain. P3 still escalates at 2
+    consecutive failures (verified separately).
+    """
+    state = _state_with_turn(
+        correct=None,
+        confidence=0.7,
+        mastery=0.3,
+        consecutive_incorrect=1,
+        last_modality="explain",
+        attempts=2,
+    )
+    decision = decide(state)
+    assert decision.action == "new_question", (
+        f"P5b should ask another question after one wrong, got {decision.action}"
+    )
+
+
+def test_p3_still_escalates_at_two_consecutive_failures() -> None:
+    """Sanity: relaxing P5b must not stop P3 from firing on persistent failure."""
+    state = _state_with_turn(
+        correct=False,
+        confidence=0.6,
+        mastery=0.3,
+        consecutive_incorrect=2,
+        last_modality="multiple_choice",
+        attempts=3,
+    )
+    decision = decide(state)
+    assert decision.action == "change_modality"
+    assert decision.suggested_modality == "worked_example"
+
+
+def test_p5b_also_fires_after_worked_example() -> None:
+    """A worked_example is teaching, not testing — next move should be a question."""
+    state = _state_with_turn(
+        correct=None,
+        confidence=None,
+        mastery=0.3,
+        consecutive_incorrect=0,
+        last_modality="worked_example",
+        attempts=3,
+    )
+    decision = decide(state)
+    assert decision.action == "new_question"
+
+
 def test_priority_p1_beats_p2() -> None:
     """Low confidence should override otherwise-passing advance criteria."""
     state = _state_with_turn(

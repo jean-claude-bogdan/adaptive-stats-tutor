@@ -94,3 +94,13 @@ class LearnerState(BaseModel):
             return False
         self.current_kc = KC_SEQUENCE[idx + 1]
         return True
+
+
+KC_LABELS: dict[KC, str] = {
+    KC.MEAN_MEDIAN: "Mean and Median",
+    KC.VARIANCE: "Variance and Standard Deviation",
+    KC.Z_SCORES: "Z-Scores",
+    KC.SAMPLING_DISTRIBUTIONS: "Sampling Distributions",
+    KC.STANDARD_ERROR: "Standard Error",
+    KC.CONFIDENCE_INTERVALS: "Confidence Intervals",
+}
