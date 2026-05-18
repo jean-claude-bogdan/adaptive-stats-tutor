@@ -59,6 +59,8 @@ cp .env.example .env             # then add your ANTHROPIC_API_KEY
 pytest                            # 84 tests, ~5s
 ```
 
+> **New to the repo?** [`GETTING_STARTED.md`](GETTING_STARTED.md) walks through clone → install → run in 5 minutes, plus troubleshooting.
+
 ### Run the CLI demo
 
 ```bash
