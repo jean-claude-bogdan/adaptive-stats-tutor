@@ -1,109 +1,108 @@
-# Product Decisions — Adaptive Statistics Tutor v1
+# Open Product Questions — Adaptive Statistics Tutor v1
 
-Companion to [TWO_PAGER.md](./TWO_PAGER.md). Twelve open decisions, grouped by impact. Each lists options, a default, and the rationale.
+Companion to [TWO_PAGER.md](./TWO_PAGER.md). Twelve open product questions, grouped by impact. Each one lists the options, our recommended pick, and why it matters.
 
-> **Status legend:**  ✅ shipped · 🟡 pilot pick (default chosen) · ⬜ open
+> **Status key:**  ✅ done · 🟡 default picked for the pilot · ⬜ still open
 
-## A. Mastery progression
+## A. How students progress through topics
 
-**1. Mastery threshold to advance** — currently `mastery ≥ 0.80 AND stability ≥ 0.70`
-- (a) Keep 0.80/0.70 — rigorous, ~60 turns to finish 6 KCs
-- (b) Loosen to 0.70/0.60 — ~36 turns total
-- (c) Tighten to 0.85/0.80 — ~80 turns
-- **Default: (a).**
+**1. When does a student "master" a topic?** — currently when mastery score ≥ 0.80 *and* steady-performance score ≥ 0.70
+- (a) Keep current thresholds — strict, takes about 60 turns to finish all 6 topics
+- (b) Loosen to 0.70 / 0.60 — about 36 turns total
+- (c) Tighten to 0.85 / 0.80 — about 80 turns
+- **Recommended: (a).**
 
-**2. Stability growth rate** — currently `stability += 0.10 × consecutive_correct`
-- (a) Keep — saturates after 4 correct, one slip resets heavily
-- (b) Linear `+0.10`/answer — slower, steadier, ~7 correct to saturate
-- (c) Use raw streak counter for advance instead of stability score
-- **Default: (b).** *(Pilot pick.)*
+**2. How fast does the "steady performance" score grow?** — currently grows by 0.10 for each correct answer in a row
+- (a) Keep — maxes out after 4 correct, but one wrong answer drops it a lot
+- (b) Add a flat 0.10 per answer instead — slower and steadier, takes ~7 correct to max out
+- (c) Just use the raw streak count instead of a separate score
+- **Recommended: (b).** 🟡 *Pick for the pilot.*
 
-**3. `state.history` per-KC vs. global** — `last_turn` is currently the most recent turn across all KCs
-- (a) Leave it — P0 handles the bad case
-- (b) Refactor `last_turn` to be per-KC
-- **Default: (a).**
+**3. Does "last turn" mean the last turn on this topic, or the last turn overall?** — currently overall
+- (a) Leave it as-is — the rules already handle the edge case
+- (b) Change it to be per-topic
+- **Recommended: (a).**
 
-## B. Content & item bank
+## B. Practice questions
 
-**4. Items per KC** — 9–10 today; ~10 correct needed to master ✅
-- (a) Hand-author 6 more per KC (~3 SME hours)
-- (b) LLM-generated variants at runtime
-- (c) Accept repetition (spaced-practice framing)
-- **Shipped: (a). Item bank expanded from 20 → 56.** Floor enforced via `tests/test_content.py` (≥8/KC).
+**4. How many questions per topic?** — currently 9–10 each; about 10 correct needed to master a topic ✅
+- (a) Hand-write 6 more per topic (about 3 hours of subject-expert time)
+- (b) Have the AI generate variants at runtime
+- (c) Accept some repetition and frame it as spaced practice
+- **Done: (a). Question bank expanded from 20 → 56.** Minimum number per topic enforced by the test suite (`tests/test_content.py`).
 
-**5. Dedicated `worked_example` items**
-- (a) No — any item can be presented as a worked example
-- (b) Yes — 1 per KC as a tutorial preamble
-- **Default: (a).**
+**5. Should we write dedicated worked-example questions?**
+- (a) No — any question can be shown as a worked example
+- (b) Yes — write one per topic as a tutorial preamble
+- **Recommended: (a).**
 
 ## C. Session shape
 
-**6. Session length**
-- (a) One KC per session (needs persistence)
-- (b) All 6 KCs in one session (current implicit behavior, 30–60 min)
-- (c) Learner-driven; resume from `current_kc`
-- **Default: (a) if Canvas assignment-scoped, otherwise (c).**
+**6. How long is a session?**
+- (a) One topic per session (requires saving progress between sessions)
+- (b) All 6 topics in one session (current behavior, 30–60 minutes)
+- (c) The student decides; they resume where they left off
+- **Recommended: (a) if sessions are tied to a Canvas assignment, otherwise (c).**
 
-**7. KC ordering** — fixed `KC_SEQUENCE` today
+**7. Are topics taught in a fixed order?** — currently yes
 - (a) Fixed order
-- (b) Diagnostic pre-test → skip mastered KCs
-- (c) Learner picks
-- **Default: (a) for v1, (b) for v2.**
+- (b) Short pre-test, skip topics they already know
+- (c) Student picks the order
+- **Recommended: (a) for version 1, (b) for version 2.**
 
-## D. Pedagogy
+## D. Teaching approach
 
-**8. Wrong-answer behavior**
-- (a) Re-explain immediately (current)
-- (b) Offer one retry first, re-explain on 2nd miss
-- (c) Show worked example, no re-explain text
-- **Default: (b).** *(Pilot pick.)*
+**8. What happens after a wrong answer?**
+- (a) Re-explain immediately (current behavior)
+- (b) Let the student retry once first, then re-explain if they miss again
+- (c) Show a worked example, skip the re-explanation text
+- **Recommended: (b).** 🟡 *Pick for the pilot.*
 
-**9. Confidence prompts** ✅
-- (a) Every turn (current) — best routing signal
-- (b) Only after re-explain or worked_example
-- (c) Learner-toggleable
-- **Shipped: (b).** Server returns `confidence_prompt: null` for routine turns; UI hides the slider. Tested in `tests/test_app.py::test_*confidence*`.
+**9. When does the tutor ask for a confidence rating?** ✅
+- (a) Every turn (the original choice) — best signal for the rules
+- (b) Only after a re-explanation or worked example
+- (c) Let the student turn it on or off
+- **Done: (b).** The server tells the chat interface when to hide the slider so students aren't asked on routine turns. Tested in `tests/test_app.py`.
 
-**10. Misconception transparency** — should the tutor name the misconception it detected?
+**10. Should the tutor name the misconception when it spots one?**
 - (a) Yes — "It looks like you mixed up mean and median, which is common"
-- (b) No — explain the right approach without labelling
-- **Default: (a).**
+- (b) No — just explain the right approach without labeling it
+- **Recommended: (a).**
 
 ## E. Grading
 
-**11. Free-response grader**
-- (a) Keep prototype string + numeric-token match
-- (b) LLM rubric-grader (~$0.002/turn on Haiku)
-- (c) MC-only for v1
-- **Default: (c) for pilot, (b) for v2.** *(Pilot pick.)*
+**11. How do we grade free-response answers?**
+- (a) Keep the current simple text-match (with number tolerance so "(46.08, 53.92)" matches "46.08, 53.92")
+- (b) Use AI-based grading with a rubric (about $0.002 per turn on Haiku)
+- (c) Multiple-choice only for version 1
+- **Recommended: (c) for the pilot, (b) for version 2.** 🟡 *Pick for the pilot.*
 
-## F. Cost & scale
+## F. Cost and scale
 
-**12. Sonnet escalation threshold** — currently `confidence < 0.45`
-- (a) Keep 0.45 — ~10–20% of turns hit Sonnet
-- (b) Tighten to 0.30 — only severely stuck learners
-- (c) Also escalate on 2+ consecutive failures regardless of confidence
-- **Default: (a).** Revisit with pilot telemetry.
-
----
-
-## Pilot-lead recommendation
-
-Take **defaults except #2, #4, #8, #9, #11** — the five non-default picks aim at reducing pilot brittleness. All other decisions can be revisited mid-pilot with telemetry.
+**12. When does the tutor upgrade from the cheap model to the smart one?** — currently when confidence is below 4.5/10
+- (a) Keep the current threshold — about 10–20% of turns hit the smart model
+- (b) Tighten to 3.0/10 — only the most stuck students
+- (c) Also upgrade after 2+ wrong answers in a row, regardless of confidence
+- **Recommended: (a).** Revisit once we have data from the pilot.
 
 ---
 
-## Post-review changelog
+## Recommendation for the pilot lead
 
-Items shipped after the tech-lead / CPO review on 2026-05-15:
+Take the defaults *except for* #2, #4, #8, #9, and #11. Those five non-default picks make the pilot more robust. Everything else can be tuned during the pilot once we have real data.
 
-| Decision | What shipped |
+---
+
+## What's already done
+
+Shipped after the engineering and product reviews on 2026-05-15:
+
+| Question | What we did |
 |----------|--------------|
-| **#4 — items per KC** | Item bank 20 → 56 (≥9 per KC). Coverage floor enforced via `tests/test_content.py`. |
-| **#9 — confidence prompts** | Friction-gated server-side; UI hides slider when not needed. |
-| **Bonus — auditability wedge** | New `TurnResponse.tutor_reason` field surfaces a learner-friendly reason for every adaptation move; rendered as a 💡 banner above each tutor bubble. |
+| **#4 — questions per topic** | Question bank 20 → 56 (at least 9 per topic). Minimum enforced by automated tests. |
+| **#9 — confidence prompts** | Server only asks for confidence after re-explanations or worked examples; chat interface hides the slider on routine turns. |
+| **Bonus — visible reasoning** | Every server response now includes a plain-English line for *why* the tutor made its next move (e.g. "That answer wasn't quite right — let me re-explain"). The chat shows it as a 💡 line above the tutor's message. |
 
-Code-quality items also shipped (tech-lead review F1–F6):
-`KC_LABELS` import fix · per-session `asyncio.Lock` + idle TTL eviction · `TurnLog` mutation safety · shared `src/engine.py` extracted · `tests/test_app.py` (14 tests) · `ContentStore.get_item` returns typed `Exercise` · env-driven model IDs · robust JSON extraction · one retry on transient API error.
+We also closed all six items from the engineering review (a stale-import bug, request-coordination locks, safer record-keeping, a shared module to keep the command-line and web flows in sync, type-safe content lookups, environment-driven model names, more robust AI-output parsing).
 
-Tests grew from 51 → 79.
+Tests grew from 51 → 84.

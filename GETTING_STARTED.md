@@ -2,37 +2,39 @@
 
 A 5-minute walkthrough to get the Adaptive Statistics Tutor running on your machine.
 
-> **TL;DR**
+> **Quick version**
 > ```bash
 > git clone https://github.com/jean-claude-bogdan/adaptive-stats-tutor.git
 > cd adaptive-stats-tutor
 > pip install -r requirements-dev.txt
 > cp .env.example .env       # edit, paste your ANTHROPIC_API_KEY
-> pytest                     # 84 tests, ~5s
-> python -m src.app          # open http://localhost:8000
+> pytest                     # should show 84 tests passing in about 5 seconds
+> python -m src.app          # open http://localhost:8000 in your browser
 > ```
 
 ---
 
-## 1. Prerequisites
+## 1. What you need first
 
-| Tool | Version | How to check |
+| Tool | Version | How to check it's installed |
 |------|---------|--------------|
 | **Python** | 3.11 or newer | `python --version` |
-| **pip** | any recent | `pip --version` |
+| **pip** (Python package installer) | any recent | `pip --version` |
 | **git** | any recent | `git --version` |
-| **Anthropic API key** | from [console.anthropic.com](https://console.anthropic.com/) | — |
+| **Anthropic API key** | get one at [console.anthropic.com](https://console.anthropic.com/) | — |
 
-> Windows? PowerShell or Git Bash both work. On macOS/Linux, use your normal terminal.
+> Windows? PowerShell or Git Bash both work. On macOS or Linux, use your normal terminal.
 
-## 2. Clone the repo
+## 2. Download the project
 
 ```bash
 git clone https://github.com/jean-claude-bogdan/adaptive-stats-tutor.git
 cd adaptive-stats-tutor
 ```
 
-## 3. (Recommended) Create a virtual environment
+## 3. (Recommended) Create an isolated Python environment
+
+This keeps the project's libraries from interfering with anything else on your machine.
 
 ```bash
 # macOS / Linux
@@ -44,35 +46,35 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-## 4. Install dependencies
+## 4. Install the libraries
 
-For everyday use:
+For just running the project:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-For development (adds pytest, mypy, ruff):
+For working on the code (adds tools for testing, type-checking, and code-style checks):
 
 ```bash
 pip install -r requirements-dev.txt
 ```
 
-## 5. Configure your API key
+## 5. Add your Anthropic API key
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` in any editor and paste your key:
+Open `.env` in any text editor and paste your key:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-> The server will still run without a key — it just returns a safe fallback message ("I'm having a little trouble right now…") instead of real Claude output. Tests work fully offline.
+> The server will still run without a key — it just shows a safe backup message ("I'm having a little trouble right now…") instead of real Claude output. The tests work fully offline so they don't need a key either.
 
-## 6. Verify everything works
+## 6. Check everything works
 
 ```bash
 pytest
@@ -84,7 +86,7 @@ You should see something like:
 ============================= 84 passed in 5.00s ==============================
 ```
 
-If anything fails, see [Troubleshooting](#troubleshooting) below.
+If anything fails, see [Troubleshooting](#troubleshooting) at the bottom.
 
 ## 7. Run the web app
 
@@ -98,9 +100,9 @@ You'll see:
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-Open **http://localhost:8000/** in your browser. You should see the chat UI with the six knowledge components across the top.
+Open **http://localhost:8000/** in your browser. You should see the chat interface with six topic chips across the top.
 
-Try this 60-second arc:
+Try this 60-second walkthrough:
 
 1. Read the first tutor message
 2. Click **"Got it"**
@@ -109,25 +111,25 @@ Try this 60-second arc:
 5. Rate your understanding 0–10 and click **Rate & continue**
 6. The tutor asks another question — try the correct answer this time
 
-Watch the **mastery percentages** at the top update as you go.
+Watch the **percentage** next to each topic at the top update as you go.
 
-## 8. (Optional) Run the CLI demo instead
+## 8. (Optional) Run the command-line demo instead
 
-The same flow without a browser:
+Same flow, no browser:
 
 ```bash
 python -m src.demo --learner alice
 ```
 
-Type answers at the prompts. Add `-v` for verbose logging.
+Type answers at the prompts. Add `-v` for verbose output.
 
-## 9. Useful follow-up commands
+## 9. Other useful commands
 
 ```bash
 pytest -v                       # show every test name
 pytest tests/test_policy.py     # run a single test file
-ruff check src/ tests/          # lint
-mypy src/ canvas_stub.py        # strict type-check
+ruff check src/ tests/          # check code style
+mypy src/ canvas_stub.py        # check types
 ```
 
 ---
@@ -135,10 +137,10 @@ mypy src/ canvas_stub.py        # strict type-check
 ## Troubleshooting
 
 **`ModuleNotFoundError: No module named 'src'`**
-You're not in the repo root. Run `cd adaptive-stats-tutor` first.
+You're not in the project folder. Run `cd adaptive-stats-tutor` first.
 
 **`Error: ANTHROPIC_API_KEY is not set`**
-The CLI demo requires the key. Make sure `.env` exists and contains a valid key, or pass it inline:
+The command-line demo requires the key. Make sure `.env` exists and contains a valid key, or pass it on the command line:
 ```bash
 ANTHROPIC_API_KEY=sk-ant-... python -m src.demo
 ```
@@ -150,16 +152,16 @@ python -m uvicorn src.app:app --port 8765
 Then open `http://localhost:8765/`.
 
 **Tests fail right after install on Windows**
-Make sure your Python version is **3.11 or newer**. The codebase uses 3.11+ syntax (`StrEnum`, `X | None` unions).
+Make sure your Python is **3.11 or newer**. The code uses features from Python 3.11+.
 
-**Chat UI loads but says "Could not connect to the tutor server"**
-The browser opened a stale tab from before the server started. Refresh the page.
+**Chat interface loads but says "Could not connect to the tutor server"**
+The browser is showing a stale tab from before the server started. Refresh the page.
 
 ---
 
 ## What's next?
 
-- Read [`README.md`](README.md) for architecture, policy priorities, and scaling notes.
+- Read [`README.md`](README.md) for how the whole system fits together and how it's designed to scale.
 - Read [`docs/TWO_PAGER.md`](docs/TWO_PAGER.md) for the product strategy in two pages.
-- Browse [`src/content/items.json`](src/content/items.json) — 56 statistics questions across 6 knowledge components.
-- Look at [`src/policy.py`](src/policy.py) — every adaptation decision is one of 7 priority rules in ~150 lines.
+- Browse [`src/content/items.json`](src/content/items.json) — 56 statistics questions across 6 topics, each with notes on common student mistakes.
+- Read [`src/policy.py`](src/policy.py) — every adaptation decision the tutor makes is one of 7 rules in about 150 lines.
