@@ -315,6 +315,13 @@ async def _execute_next_step(
             modality if modality == "worked_example" else item.modality
         )
 
+        # Label choices A, B, C… in the item's own order so the letter the
+        # learner picks maps back to a specific choice during grading.
+        labelled_choices = (
+            "\n".join(f"{chr(65 + i)}. {c}" for i, c in enumerate(item.choices))
+            if item.choices
+            else "(free response — no choices; the learner types their answer)"
+        )
         user_prompt = render_prompt(
             "question",
             kc_label=kc_label,
@@ -322,7 +329,7 @@ async def _execute_next_step(
             modality=presentation_modality,
             difficulty=item.difficulty,
             question=item.question,
-            choices="\n".join(item.choices),
+            choices=labelled_choices,
         )
         llm_out = await _call_llm_async(
             _system_prompt,
@@ -421,7 +428,16 @@ async def submit_turn(session_id: str, body: TurnRequest) -> TurnResponse:
                 raise HTTPException(status_code=422, detail="answer required for question turns")
 
             item = session.pending_item
-            correct = _grade(body.answer, item.correct_answer) if item else False
+            # Learner may answer a multiple-choice item with the letter (A/B/C…)
+            # or the value itself; map a bare letter back to its choice text.
+            graded_answer = body.answer
+            if item and item.choices:
+                token = body.answer.strip().rstrip(".)").upper()
+                if len(token) == 1 and token.isalpha():
+                    idx = ord(token) - 65
+                    if 0 <= idx < len(item.choices):
+                        graded_answer = item.choices[idx]
+            correct = _grade(graded_answer, item.correct_answer) if item else False
 
             feedback_prompt = render_prompt(
                 "feedback",

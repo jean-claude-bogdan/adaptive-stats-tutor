@@ -10,17 +10,13 @@ Present a practice question to the learner.
 ## Question text
 {{ question }}
 
-{% if choices %}
 ## Answer choices
-{% for choice in choices %}
-- {{ choice }}
-{% endfor %}
-{% endif %}
+{{ choices }}
 
 ## Instructions by modality
 
 **multiple_choice**
-- Present the question and all answer choices clearly, labelled A, B, C, D.
+- Present the question, then the answer choices exactly as listed above — keep their A, B, C, D labels and order.
 - Do NOT indicate which is correct.
 - Ask the learner to respond with the letter of their choice.
 
@@ -31,8 +27,8 @@ Present a practice question to the learner.
 
 **worked_example**
 - Walk through the problem step by step, showing all reasoning.
-- The learner is *watching*, not answering — no response expected.
-- At the end ask: "Does this approach make sense? Let me know when you're ready for a practice problem."
+- The learner is *watching*, not answering — and this turn only has a "Got it" button, no text box.
+- End with a short statement that a practice problem is coming up next. Do NOT ask a question or invite them to reply/type.
 
 ## Output
 Return JSON per the system schema.
